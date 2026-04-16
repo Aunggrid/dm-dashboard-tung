@@ -1,0 +1,9 @@
+# Temp files
+*.py
+*.json
+~$*
+*.tmp
+
+# System
+Thumbs.db
+.DS_Store

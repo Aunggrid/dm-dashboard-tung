@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แดชบอร์ดคลินิกเบาหวาน</title>
+<script src="libs/chart.min.js"></script>
+<script src="libs/chartjs-datalabels.min.js"></script>
+<style>
+@font-face { font-family: 'Sarabun'; font-weight: 400; font-style: normal; font-display: swap; src: url('libs/fonts/sarabun-400.ttf') format('truetype'); }
+@font-face { font-family: 'Sarabun'; font-weight: 500; font-style: normal; font-display: swap; src: url('libs/fonts/sarabun-500.ttf') format('truetype'); }
+@font-face { font-family: 'Sarabun'; font-weight: 600; font-style: normal; font-display: swap; src: url('libs/fonts/sarabun-600.ttf') format('truetype'); }
+@font-face { font-family: 'Sarabun'; font-weight: 700; font-style: normal; font-display: swap; src: url('libs/fonts/sarabun-700.ttf') format('truetype'); }
+:root {
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --warning: #ea580c;
+  --warning-light: #fff7ed;
+  --purple: #7c3aed;
+  --purple-light: #ede9fe;
+  --teal: #0d9488;
+  --teal-light: #ccfbf1;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Sarabun', 'Noto Sans Thai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--gray-100);
+  color: var(--gray-800);
+  line-height: 1.5;
+}
+.header {
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: #fff;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header h1 { font-size: 1.4rem; font-weight: 700; }
+.header .subtitle { font-size: .85rem; opacity: .85; }
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.nav-tabs button {
+  background: rgba(255,255,255,.15);
+  border: none;
+  color: rgba(255,255,255,.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .85rem;
+  font-weight: 500;
+  transition: all .2s;
+}
+.nav-tabs button:hover { background: rgba(255,255,255,.25); color: #fff; }
+.nav-tabs button.active { background: #fff; color: var(--primary); font-weight: 600; }
+
+.main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Filter bar */
+.filter-bar {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: .75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; }
+.filter-group select, .filter-group input {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: .85rem;
+  background: #fff;
+  min-width: 120px;
+}
+.filter-group select:focus, .filter-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.btn-reset {
+  padding: 6px 16px;
+  background: var(--gray-200);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: .85rem;
+  font-weight: 500;
+  align-self: flex-end;
+}
+.btn-reset:hover { background: var(--gray-300); }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: transform .2s;
+  border-left: 4px solid var(--primary);
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.kpi-card.success { border-left-color: var(--success); }
+.kpi-card.danger { border-left-color: var(--danger); }
+.kpi-card.warning { border-left-color: var(--warning); }
+.kpi-card.purple { border-left-color: var(--purple); }
+.kpi-card.teal { border-left-color: var(--teal); }
+.kpi-value { font-size: 2rem; font-weight: 700; color: var(--gray-900); }
+.kpi-label { font-size: .8rem; color: var(--gray-500); margin-top: 4px; font-weight: 500; }
+.kpi-sub { font-size: .75rem; color: var(--gray-400); margin-top: 2px; }
+
+/* Chart grid */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.chart-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.chart-card h3 {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.chart-card .chart-wrap { position: relative; width: 100%; min-height: 280px; }
+.chart-card.full-width { grid-column: 1 / -1; }
+
+/* Tables */
+.table-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+.table-card h3 {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 12px;
+}
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+thead th {
+  background: var(--gray-50);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gray-100);
+}
+tbody tr:hover { background: var(--gray-50); }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+}
+.badge-success { background: var(--success-light); color: var(--success); }
+.badge-danger { background: var(--danger-light); color: var(--danger); }
+.badge-warning { background: var(--warning-light); color: var(--warning); }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.badge-primary { background: var(--primary-light); color: var(--primary); }
+
+/* Patient search */
+.search-box {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.search-box input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  border: 2px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.search-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.search-box button {
+  padding: 10px 24px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.search-box button:hover { background: #1d4ed8; }
+
+.patient-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.info-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.info-card h4 { font-size: .85rem; color: var(--gray-500); margin-bottom: 8px; }
+.info-card .val { font-size: 1.1rem; font-weight: 600; }
+
+/* Section title */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin: 24px 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary);
+  display: inline-block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header { padding: 12px 16px; }
+  .header h1 { font-size: 1.1rem; }
+  .nav-tabs button { padding: 6px 10px; font-size: .75rem; }
+  .main { padding: 12px; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .filter-bar { padding: 12px; gap: 8px; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+
+/* Goal indicator bars */
+.goal-bar-container { margin: 8px 0; }
+.goal-bar-label { display: flex; justify-content: space-between; font-size: .8rem; margin-bottom: 4px; }
+.goal-bar { height: 24px; background: var(--gray-200); border-radius: 12px; overflow: hidden; position: relative; }
+.goal-bar-fill { height: 100%; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: .75rem; font-weight: 600; transition: width .5s ease; }
+.goal-bar-fill.green { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.goal-bar-fill.red { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.goal-bar-fill.orange { background: linear-gradient(90deg, #ea580c, #f97316); }
+.goal-bar-fill.blue { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+
+/* Clickable chart legend */
+.custom-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; justify-content: center; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: .8rem; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+.legend-item:hover { background: var(--gray-100); }
+.legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+/* Tooltip info */
+.info-tooltip {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background: var(--gray-300);
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 18px;
+  font-size: .7rem;
+  cursor: help;
+  position: relative;
+  margin-left: 4px;
+}
+.info-tooltip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-800);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: .75rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* Animate */
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+.fade-in { animation: fadeIn .3s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>แดชบอร์ดคลินิกเบาหวาน</h1>
+    <div class="subtitle">วิเคราะห์ข้อมูลการเยี่ยมผู้ป่วย &mdash; DM Remission Study</div>
+  </div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="active" data-tab="overview">ภาพรวม</button>
+    <button data-tab="dm">ควบคุม DM</button>
+    <button data-tab="dlp">ควบคุม DLP</button>
+    <button data-tab="ht">ควบคุม HT</button>
+    <button data-tab="pharmacy">เภสัชกรรม</button>
+    <button data-tab="drps">DRPs</button>
+    <button data-tab="demographics">ข้อมูลประชากร</button>
+    <button data-tab="patient">ค้นหาผู้ป่วย</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Global Filters -->
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-group">
+      <label>เพศ</label>
+      <select id="filterSex"><option value="">ทั้งหมด</option><option value="1">ชาย</option><option value="0">หญิง</option></select>
+    </div>
+    <div class="filter-group">
+      <label>ช่วงอายุ</label>
+      <select id="filterAge">
+        <option value="">ทั้งหมด</option>
+        <option value="0-40">&lt; 40 ปี</option>
+        <option value="40-50">40-49 ปี</option>
+        <option value="50-60">50-59 ปี</option>
+        <option value="60-70">60-69 ปี</option>
+        <option value="70-100">70+ ปี</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>สิทธิ์</label>
+      <select id="filterScheme"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-group">
+      <label>ครั้งที่เยี่ยม</label>
+      <select id="filterVisit"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-group">
+      <label>จำนวนยา</label>
+      <select id="filterPharmacy">
+        <option value="">ทั้งหมด</option>
+        <option value="poly">Polypharmacy (&gt;5 รายการ)</option>
+        <option value="normal">ปกติ (&le;5 รายการ)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>DM Remission</label>
+      <select id="filterRemission">
+        <option value="">ทั้งหมด</option>
+        <option value="remission">DM Remission (ยา DM=0)</option>
+        <option value="normal">ปกติ (ยา DM&gt;0)</option>
+      </select>
+    </div>
+    <button class="btn-reset" id="btnReset">ล้างตัวกรอง</button>
+  </div>
+
+  <!-- TAB: Overview -->
+  <div class="tab-content active" id="tab-overview">
+    <div class="kpi-grid" id="kpiOverview"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>อัตราการบรรลุเป้าหมาย</h3><div class="chart-wrap"><canvas id="chartGoals"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายของการปรับยา</h3><div class="chart-wrap"><canvas id="chartMedAdj"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายค่า A1C</h3><div class="chart-wrap"><canvas id="chartA1CDist"></canvas></div></div>
+      <div class="chart-card"><h3>จำนวนการเยี่ยมตามช่วงเวลา</h3><div class="chart-wrap"><canvas id="chartTimeline"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: DM Control -->
+  <div class="tab-content" id="tab-dm">
+    <div class="kpi-grid" id="kpiDM"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>การกระจายค่า A1C <span class="info-tooltip" data-tip="เป้าหมาย: A1C < 6.5">?</span></h3><div class="chart-wrap"><canvas id="chartA1C"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายค่า FBS <span class="info-tooltip" data-tip="เป้าหมาย: FBS < 120">?</span></h3><div class="chart-wrap"><canvas id="chartFBS"></canvas></div></div>
+      <div class="chart-card"><h3>การปรับยา DM <span class="info-tooltip" data-tip="0=ไม่ปรับ, 1=ลดยา, 2=เพิ่มยา, 3=เปลี่ยนยา">?</span></h3><div class="chart-wrap"><canvas id="chartDMCtrl"></canvas></div></div>
+      <div class="chart-card"><h3>A1C เทียบกับการปรับยา DM</h3><div class="chart-wrap"><canvas id="chartA1CvsDM"></canvas></div></div>
+    </div>
+    <div class="table-card">
+      <h3>สรุปการควบคุม DM แยกตามครั้งที่เยี่ยม</h3>
+      <div id="tableDMSummary"></div>
+    </div>
+  </div>
+
+  <!-- TAB: DLP Control -->
+  <div class="tab-content" id="tab-dlp">
+    <div class="kpi-grid" id="kpiDLP"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>การกระจายค่า LDL <span class="info-tooltip" data-tip="เป้าหมาย: LDL < 90">?</span></h3><div class="chart-wrap"><canvas id="chartLDL"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายค่า TG <span class="info-tooltip" data-tip="เป้าหมาย: TG < 150">?</span></h3><div class="chart-wrap"><canvas id="chartTG"></canvas></div></div>
+      <div class="chart-card"><h3>การปรับยา DLP</h3><div class="chart-wrap"><canvas id="chartDLPCtrl"></canvas></div></div>
+      <div class="chart-card"><h3>LDL เทียบกับการปรับยา DLP</h3><div class="chart-wrap"><canvas id="chartLDLvsDLP"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: HT Control -->
+  <div class="tab-content" id="tab-ht">
+    <div class="kpi-grid" id="kpiHT"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>การกระจายค่า SBP <span class="info-tooltip" data-tip="เป้าหมาย: SBP < 130">?</span></h3><div class="chart-wrap"><canvas id="chartSBP"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายค่า DBP <span class="info-tooltip" data-tip="เป้าหมาย: DBP < 80">?</span></h3><div class="chart-wrap"><canvas id="chartDBP"></canvas></div></div>
+      <div class="chart-card"><h3>การปรับยา HT</h3><div class="chart-wrap"><canvas id="chartHTCtrl"></canvas></div></div>
+      <div class="chart-card"><h3>กราฟกระจาย SBP vs DBP</h3><div class="chart-wrap"><canvas id="chartBPScatter"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: Pharmacy -->
+  <div class="tab-content" id="tab-pharmacy">
+    <div class="kpi-grid" id="kpiPharmacy"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>Polypharmacy เทียบกับปกติ</h3><div class="chart-wrap"><canvas id="chartPoly"></canvas></div></div>
+      <div class="chart-card"><h3>DM Remission เทียบกับปกติ</h3><div class="chart-wrap"><canvas id="chartRemission"></canvas></div></div>
+      <div class="chart-card"><h3>จำนวนยาแยกตามประเภท</h3><div class="chart-wrap"><canvas id="chartMedType"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายจำนวนยาทั้งหมด</h3><div class="chart-wrap"><canvas id="chartMedDist"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: DRPs -->
+  <div class="tab-content" id="tab-drps">
+    <div class="kpi-grid" id="kpiDRPS"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>ประเภท DRP (ยาเบาหวาน)</h3><div class="chart-wrap"><canvas id="chartDRPType"></canvas></div></div>
+      <div class="chart-card"><h3>DRP อื่นๆ (ยานอกเหนือเบาหวาน)</h3><div class="chart-wrap"><canvas id="chartOtherDRP"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายจำนวน DRP</h3><div class="chart-wrap"><canvas id="chartDRPCount"></canvas></div></div>
+      <div class="chart-card"><h3>เหตุการณ์ Hypoglycemia & Hyperglycemia</h3><div class="chart-wrap"><canvas id="chartGlycemia"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: Demographics -->
+  <div class="tab-content" id="tab-demographics">
+    <div class="kpi-grid" id="kpiDemo"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>การกระจายเพศ</h3><div class="chart-wrap"><canvas id="chartSex"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจายอายุ</h3><div class="chart-wrap"><canvas id="chartAge"></canvas></div></div>
+      <div class="chart-card"><h3>สิทธิ์การรักษา</h3><div class="chart-wrap"><canvas id="chartScheme"></canvas></div></div>
+      <div class="chart-card"><h3>การกระจาย BMI</h3><div class="chart-wrap"><canvas id="chartBMI"></canvas></div></div>
+      <div class="chart-card"><h3>การทำงานของไต (eGFR)</h3><div class="chart-wrap"><canvas id="chartEGFR"></canvas></div></div>
+      <div class="chart-card"><h3>จำนวนครั้งที่เยี่ยมต่อผู้ป่วย</h3><div class="chart-wrap"><canvas id="chartVisitsPerPt"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: Patient Lookup -->
+  <div class="tab-content" id="tab-patient">
+    <div class="search-box">
+      <input type="text" id="patientSearch" placeholder="ใส่หมายเลขผู้ป่วย (1-107) หรือเลข HN...">
+      <button id="btnSearch">ค้นหา</button>
+    </div>
+    <div id="patientResult"></div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const RAW_DATA = [{"NO": 1, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 126, "SCR": 1.1, "EGFR": 71.07, "LDL": 79, "TG": 101, "BW": 72.8, "HT": 166, "BMI": 26.42, "SBP": 141, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 1, "VISIT": 2, "HN": null, "VISIT_DATE": "2026-01-14", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 0, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.2, "FBS": 125, "SCR": 0.95, "EGFR": 84.25, "LDL": 93, "TG": 91, "BW": 72.8, "HT": 166, "BMI": 26.42, "SBP": 148, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 2, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 13.3, "FBS": 123, "SCR": 0.52, "EGFR": 107.91, "LDL": 157, "TG": 223, "BW": 54.1, "HT": 145, "BMI": 25.73, "SBP": 164, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 2, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 153, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 53.5, "HT": 145, "BMI": 25.45, "SBP": 174, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 2, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.9, "FBS": 151, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 54.4, "HT": 145, "BMI": 25.87, "SBP": 155, "DBP": 72, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 3, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-03", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Adverse drug reaction", "OTHERDRPS": null, "A1C": 7.3, "FBS": 145, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 86.3, "HT": 172, "BMI": 29.17, "SBP": 120, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 3, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-02", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Need for additional drug", "OTHERDRPS": null, "A1C": 7.3, "FBS": 176, "SCR": 0.93, "EGFR": 85.24, "LDL": 133, "TG": 214, "BW": 86.4, "HT": 172, "BMI": 29.2, "SBP": 140, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 3, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-04-30", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 2, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": "Adverse drug reaction", "A1C": null, "FBS": 134, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 87.4, "HT": 173, "BMI": 29.2, "SBP": 145, "DBP": 94, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 0}, {"NO": 3, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-05-14", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 167, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 86.5, "HT": 171.5, "BMI": 29.41, "SBP": 132, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 3, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-08-27", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.2, "FBS": 155, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 88, "HT": 174, "BMI": 29.07, "SBP": 132, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 3, "VISIT": 6, "HN": null, "VISIT_DATE": "2025-12-03", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.7, "FBS": 190, "SCR": 1.02, "EGFR": 76.23, "LDL": 89, "TG": 105, "BW": 89.8, "HT": 174, "BMI": 29.66, "SBP": 114, "DBP": 67, "HTCONTROL": 1, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 4, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 5, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 1, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 6, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-21", "SEX": 1, "AGE": 61, "SCHEME": "OFC", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 7, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-18", "SEX": 0, "AGE": 70, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 8, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-26", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 141, "SCR": 0.76, "EGFR": 97.1, "LDL": 138, "TG": 116, "BW": 73.6, "HT": 168, "BMI": 26.08, "SBP": 130, "DBP": 91, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 8, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-23", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 0, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 149, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.5, "HT": 167.5, "BMI": 25.84, "SBP": 131, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 8, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 123, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.9, "HT": 167.5, "BMI": 25.98, "SBP": 131, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 8, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 128, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.6, "HT": 168, "BMI": 25.72, "SBP": 110, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 8, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 0, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 125, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 75.5, "HT": 168.5, "BMI": 26.59, "SBP": 125, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 8, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-03-18", "SEX": 1, "AGE": 64, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.5, "FBS": 129, "SCR": 0.71, "EGFR": 99.15, "LDL": 129, "TG": 148, "BW": 75.5, "HT": 168.5, "BMI": 26.59, "SBP": 135, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 9, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-12", "SEX": 0, "AGE": 61, "SCHEME": "SSS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 10, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-26", "SEX": 0, "AGE": 67, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 114, "SCR": 0.84, "EGFR": 73.17, "LDL": 96, "TG": 166, "BW": 45.7, "HT": 146, "BMI": 21.44, "SBP": 176, "DBP": 87, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 10, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 0, "AGE": 67, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 102, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 44.7, "HT": 146, "BMI": 20.97, "SBP": 135, "DBP": 68, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 10, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-12-03", "SEX": 0, "AGE": 67, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Inappropriate drug", "OTHERDRPS": null, "A1C": 6.2, "FBS": 114, "SCR": 0.85, "EGFR": 71.63, "LDL": 160, "TG": 134, "BW": 43.2, "HT": 146, "BMI": 20.27, "SBP": 146, "DBP": 83, "HTCONTROL": 1, "DLPCONTROL": 1, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 10, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-03-04", "SEX": 0, "AGE": 67, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 0, "DLPMED_COUNT": 2, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Need for additional drug", "OTHERDRPS": null, "A1C": 6.3, "FBS": 99, "SCR": null, "EGFR": null, "LDL": 139, "TG": 180, "BW": 43.7, "HT": 146, "BMI": 20.5, "SBP": 180, "DBP": 87, "HTCONTROL": 1, "DLPCONTROL": 1, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 11, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 0, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 1, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.8, "FBS": 123, "SCR": 0.55, "EGFR": 106.68, "LDL": 95, "TG": 65, "BW": 70.9, "HT": 159, "BMI": 28.04, "SBP": 136, "DBP": 87, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 11, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-08-27", "SEX": 0, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 113, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70.3, "HT": 158.5, "BMI": 27.98, "SBP": 135, "DBP": 87, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 11, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-12-03", "SEX": 0, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8, "FBS": 154, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.6, "HT": 158.5, "BMI": 28.9, "SBP": 135, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 11, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-03-11", "SEX": 0, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 1, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 143, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70.3, "HT": 158.5, "BMI": 27.98, "SBP": 136, "DBP": 95, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 12, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-30", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 61, "HT": 152, "BMI": 26.4, "SBP": 132, "DBP": 69, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 12, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-08-13", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 9.3, "FBS": 170, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 58.7, "HT": 152, "BMI": 25.41, "SBP": 146, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 12, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 132, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 56.7, "HT": 152, "BMI": 24.54, "SBP": 150, "DBP": 71, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 12, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.6, "FBS": 145, "SCR": 0.63, "EGFR": 94.43, "LDL": 122, "TG": 71, "BW": 53.2, "HT": 152, "BMI": 23.03, "SBP": 138, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 12, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-03-25", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 112, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 53, "HT": 152, "BMI": 22.94, "SBP": 135, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 13, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-09", "SEX": 0, "AGE": 60, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 4, "DRPS_COUNT": 1, "DRPS_TYPE": "Adverse drug reaction", "OTHERDRPS": null, "A1C": null, "FBS": 153, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 56, "HT": 156, "BMI": 23.01, "SBP": 127, "DBP": 67, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 0}, {"NO": 13, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-07-02", "SEX": 0, "AGE": 60, "SCHEME": "OFC", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Adverse drug reaction", "OTHERDRPS": null, "A1C": 9.2, "FBS": 204, "SCR": 0.63, "EGFR": 98.5, "LDL": 124, "TG": 153, "BW": 56.2, "HT": 156, "BMI": 23.09, "SBP": 135, "DBP": 67, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 3, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 1}, {"NO": 13, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 0, "AGE": 60, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 9, "FBS": 137, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 55.7, "HT": 157, "BMI": 22.6, "SBP": 124, "DBP": 67, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 13, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 0, "AGE": 60, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 97, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 54.2, "HT": 157, "BMI": 21.99, "SBP": 141, "DBP": 59, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 14, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-08", "SEX": 0, "AGE": 57, "SCHEME": "SSS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.4, "FBS": 123, "SCR": 0.55, "EGFR": 105.19, "LDL": 75, "TG": 83, "BW": 76, "HT": 155.5, "BMI": 31.43, "SBP": 174, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 14, "VISIT": 2, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 0, "AGE": 57, "SCHEME": "SSS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Dosage too low", "OTHERDRPS": null, "A1C": null, "FBS": 146, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 76, "HT": 155.5, "BMI": 31.43, "SBP": 183, "DBP": 108, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 14, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-02-18", "SEX": 0, "AGE": 57, "SCHEME": "SSS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Inappropriate drug", "OTHERDRPS": null, "A1C": 6.8, "FBS": 140, "SCR": 0.64, "EGFR": 99.37, "LDL": 74, "TG": 76, "BW": 75.7, "HT": 155.5, "BMI": 31.31, "SBP": 166, "DBP": 89, "HTCONTROL": 3, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 15, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-06-25", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 126, "SCR": 0.96, "EGFR": 87.39, "LDL": 90, "TG": 192, "BW": 66.8, "HT": 167, "BMI": 23.95, "SBP": 125, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 15, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 2, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.1, "FBS": 127, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 66.2, "HT": 168, "BMI": 23.46, "SBP": 146, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 15, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 131, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67.9, "HT": 168, "BMI": 24.06, "SBP": 127, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 16, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-23", "SEX": 0, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 5.1, "FBS": 94, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 57.8, "HT": 156, "BMI": 23.75, "SBP": 122, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 16, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-10-29", "SEX": 0, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Adverse drug reaction", "OTHERDRPS": null, "A1C": 5.5, "FBS": 91, "SCR": 1.05, "EGFR": 57.46, "LDL": 88, "TG": 141, "BW": 59.1, "HT": 156, "BMI": 24.29, "SBP": 126, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 17, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 74, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 18, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-02-05", "SEX": 1, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.1, "FBS": 122, "SCR": null, "EGFR": null, "LDL": 109, "TG": 158, "BW": 79.4, "HT": 161.5, "BMI": 30.44, "SBP": 137, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 18, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-03-05", "SEX": 1, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.7, "FBS": 136, "SCR": 0.99, "EGFR": 77.93, "LDL": 105, "TG": 198, "BW": 80, "HT": 163, "BMI": 30.11, "SBP": 146, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 19, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-13", "SEX": 1, "AGE": 58, "SCHEME": "SSS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 20, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-20", "SEX": 0, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 21, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-19", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 112, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.7, "HT": 155, "BMI": 30.26, "SBP": 144, "DBP": 88, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 21, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-23", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.5, "FBS": 105, "SCR": 0.8, "EGFR": 77.62, "LDL": 76, "TG": 192, "BW": 70.7, "HT": 155, "BMI": 29.43, "SBP": 121, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 21, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 126, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 69.5, "HT": 154, "BMI": 29.31, "SBP": 90, "DBP": 59, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 21, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-08-27", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 116, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.2, "HT": 155, "BMI": 30.05, "SBP": 119, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 21, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 101, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 73.1, "HT": 155, "BMI": 30.43, "SBP": 155, "DBP": 95, "HTCONTROL": 1, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 21, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-03-04", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.1, "FBS": 104, "SCR": 0.82, "EGFR": 74.81, "LDL": 134, "TG": 118, "BW": 73, "HT": 155, "BMI": 30.39, "SBP": 127, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 22, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 23, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 57, "SCHEME": "LGO", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 24, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 0, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 25, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-18", "SEX": 0, "AGE": 72, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 26, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 9, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 141, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 61, "HT": 150, "BMI": 27.11, "SBP": 104, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 26, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Without DRP", "OTHERDRPS": "Need for additional drug", "A1C": 7.5, "FBS": 125, "SCR": 0.7, "EGFR": 101.35, "LDL": 142, "TG": 58, "BW": 61.1, "HT": 150, "BMI": 27.16, "SBP": 108, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 26, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Without DRP", "OTHERDRPS": "Noncompliance", "A1C": null, "FBS": 143, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 61.7, "HT": 151, "BMI": 27.06, "SBP": 120, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 26, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-03-11", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 123, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 62.1, "HT": 151, "BMI": 27.24, "SBP": 129, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 27, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-15", "SEX": 0, "AGE": 76, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 28, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.5, "FBS": 117, "SCR": 2.01, "EGFR": 33.81, "LDL": 83, "TG": 69, "BW": 69.4, "HT": 165, "BMI": 25.49, "SBP": 145, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 28, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 1, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.6, "FBS": 127, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 69.4, "HT": 165, "BMI": 25.49, "SBP": 109, "DBP": 52, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 29, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 0, "AGE": 65, "SCHEME": "STP", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 30, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-12", "SEX": 1, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.1, "FBS": 127, "SCR": 1.12, "EGFR": 67.13, "LDL": 76, "TG": 235, "BW": 61.2, "HT": 159.5, "BMI": 24.06, "SBP": 125, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 30, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 1, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.3, "FBS": 121, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 60.8, "HT": 162.5, "BMI": 23.02, "SBP": 132, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 30, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 1, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 102, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 58.3, "HT": 159.5, "BMI": 22.92, "SBP": 145, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 30, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 1, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.5, "FBS": 112, "SCR": 0.99, "EGFR": 77.39, "LDL": 65, "TG": 218, "BW": 58.3, "HT": 159.5, "BMI": 22.92, "SBP": 147, "DBP": 68, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 31, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 0, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7, "FBS": 106, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 52, "HT": 155, "BMI": 21.64, "SBP": 135, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 31, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 9, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.2, "FBS": 128, "SCR": 0.57, "EGFR": 101.08, "LDL": 117, "TG": 57, "BW": 52.3, "HT": 154, "BMI": 22.05, "SBP": 136, "DBP": 71, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 32, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-20", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 33, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 0, "AGE": 44, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.2, "FBS": 113, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 77.9, "HT": 158, "BMI": 31.2, "SBP": 130, "DBP": 93, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 33, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 0, "AGE": 44, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Product-drug interaction", "OTHERDRPS": null, "A1C": 7.1, "FBS": 124, "SCR": 0.99, "EGFR": 69.52, "LDL": 58, "TG": 133, "BW": 77, "HT": 159.5, "BMI": 30.27, "SBP": 124, "DBP": 84, "HTCONTROL": 3, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 33, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 0, "AGE": 44, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 10, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 113, "SCR": 0.78, "EGFR": 92.75, "LDL": null, "TG": null, "BW": 78.4, "HT": 159.5, "BMI": 30.82, "SBP": 157, "DBP": 107, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 34, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-23", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 123, "SCR": 0.6, "EGFR": 100.8, "LDL": null, "TG": null, "BW": 66.6, "HT": 160.5, "BMI": 25.85, "SBP": 138, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 34, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 122, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67, "HT": 161.5, "BMI": 25.69, "SBP": 154, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 34, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-16", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 2, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 119, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 65, "HT": 161, "BMI": 25.08, "SBP": 134, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 34, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-10-22", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.2, "FBS": 106, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 66.2, "HT": 161, "BMI": 25.54, "SBP": 143, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 34, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-01-28", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 164, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67.7, "HT": 161.5, "BMI": 25.96, "SBP": 161, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 35, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-27", "SEX": 0, "AGE": 62, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 36, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-22", "SEX": 1, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 37, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-02", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.5, "FBS": 131, "SCR": 0.6, "EGFR": 93.96, "LDL": 103, "TG": 142, "BW": 78.4, "HT": 153, "BMI": 33.49, "SBP": 108, "DBP": 69, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 37, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-30", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.2, "FBS": 138, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 78.4, "HT": 153, "BMI": 33.49, "SBP": 131, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 37, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-05-14", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 121, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 80.6, "HT": 152, "BMI": 34.89, "SBP": 131, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 37, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-12-03", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.3, "FBS": 112, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 79.5, "HT": 153, "BMI": 33.96, "SBP": 133, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 37, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-03-11", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.3, "FBS": 104, "SCR": 0.91, "EGFR": 64.58, "LDL": 158, "TG": 113, "BW": 79.5, "HT": 153, "BMI": 33.96, "SBP": 139, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 38, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-12", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 39, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-14", "SEX": 1, "AGE": 48, "SCHEME": "SSS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 40, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-12", "SEX": 0, "AGE": 70, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 41, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-05-28", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.9, "FBS": 153, "SCR": 0.73, "EGFR": 91.71, "LDL": 77, "TG": 161, "BW": 74, "HT": 160, "BMI": 28.91, "SBP": 156, "DBP": 101, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 41, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-25", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 138, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 73, "HT": 157, "BMI": 29.62, "SBP": 160, "DBP": 98, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 41, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-23", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 151, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 73, "HT": 157, "BMI": 29.62, "SBP": 148, "DBP": 94, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 41, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-08-20", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 153, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70, "HT": 157.5, "BMI": 28.22, "SBP": 157, "DBP": 93, "HTCONTROL": 3, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 41, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7, "FBS": 140, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.2, "HT": 158.5, "BMI": 28.74, "SBP": null, "DBP": null, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 41, "VISIT": 6, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 134, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67.3, "HT": 157.5, "BMI": 27.13, "SBP": 149, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 41, "VISIT": 7, "HN": null, "VISIT_DATE": "2026-02-18", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 125, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 66.9, "HT": 160, "BMI": 26.13, "SBP": 138, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 42, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-27", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 43, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-06", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 44, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 73, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 13.6, "FBS": 344, "SCR": 1, "EGFR": 74.34, "LDL": 106, "TG": 100, "BW": 69, "HT": 163, "BMI": 25.97, "SBP": 138, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 44, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 1, "AGE": 73, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 115, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74.7, "HT": 163, "BMI": 28.12, "SBP": 138, "DBP": 76, "HTCONTROL": 3, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 45, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 126, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 63.7, "HT": 163, "BMI": 23.98, "SBP": 137, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 45, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.9, "FBS": 99, "SCR": 0.87, "EGFR": 91.85, "LDL": 52, "TG": 70, "BW": 63.5, "HT": 163, "BMI": 23.9, "SBP": 134, "DBP": 86, "HTCONTROL": 1, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 45, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 7, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 120, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 65.1, "HT": 163, "BMI": 24.5, "SBP": 154, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 46, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-20", "SEX": 1, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 47, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-26", "SEX": 1, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 9, "HTMED_COUNT": 5, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.2, "FBS": 133, "SCR": 1.25, "EGFR": 64.86, "LDL": 62, "TG": 80, "BW": 73.4, "HT": 163, "BMI": 27.63, "SBP": 121, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 47, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-23", "SEX": 1, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 9, "HTMED_COUNT": 5, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.1, "FBS": 102, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 71.5, "HT": 161.5, "BMI": 27.41, "SBP": 120, "DBP": 70, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 47, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 1, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 9, "HTMED_COUNT": 5, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 125, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72, "HT": 161.5, "BMI": 27.6, "SBP": 114, "DBP": 70, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 47, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 1, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 5, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 126, "SCR": 1.18, "EGFR": 69.06, "LDL": 53, "TG": 87, "BW": 72.7, "HT": 162, "BMI": 27.7, "SBP": 127, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 1, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 47, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-03-25", "SEX": 1, "AGE": 55, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 5, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 2, "DRPS_TYPE": "Noncompliance, Dosage too high", "OTHERDRPS": null, "A1C": null, "FBS": 100, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.7, "HT": 162, "BMI": 27.7, "SBP": 117, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 48, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-27", "SEX": 1, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 49, "VISIT": 1, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 1, "AGE": 75, "SCHEME": "LGO", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 50, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 51, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 9, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.4, "FBS": 132, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 62.2, "HT": 152, "BMI": 26.92, "SBP": 133, "DBP": 90, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 51, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-12", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 9, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8.2, "FBS": 160, "SCR": 0.7, "EGFR": 97.17, "LDL": 106, "TG": 159, "BW": 61.8, "HT": 152, "BMI": 26.75, "SBP": 144, "DBP": 91, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 51, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-12-03", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 159, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 62.6, "HT": 152, "BMI": 27.09, "SBP": 131, "DBP": 93, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 51, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-02-11", "SEX": 0, "AGE": 56, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 163, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 61.4, "HT": 152, "BMI": 26.58, "SBP": 127, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 52, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-02", "SEX": 0, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": "Noncompliance", "A1C": null, "FBS": 126, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 55.2, "HT": 150.5, "BMI": 24.37, "SBP": 137, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 52, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-07-16", "SEX": 0, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 155, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 55, "HT": 150.5, "BMI": 24.28, "SBP": 138, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 52, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-10-22", "SEX": 0, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8.3, "FBS": 164, "SCR": 0.73, "EGFR": 89.8, "LDL": 106, "TG": 132, "BW": 54.1, "HT": 151.5, "BMI": 23.57, "SBP": 129, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 52, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-01-28", "SEX": 0, "AGE": 61, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.6, "FBS": 121, "SCR": null, "EGFR": null, "LDL": 56, "TG": null, "BW": 53.6, "HT": 151, "BMI": 23.51, "SBP": 136, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 53, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-15", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 54, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 55, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 1, "AGE": 62, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 56, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-05", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.3, "FBS": 133, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 62.8, "HT": 153, "BMI": 26.83, "SBP": 163, "DBP": 93, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 56, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-09-03", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.1, "FBS": 167, "SCR": 0.7, "EGFR": 91.21, "LDL": 137, "TG": 78, "BW": 60.4, "HT": 153, "BMI": 25.8, "SBP": 140, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 56, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-10-29", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 158, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 62.8, "HT": 153, "BMI": 26.83, "SBP": 140, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 57, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-12", "SEX": 0, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 58, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-18", "SEX": 0, "AGE": 72, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 59, "VISIT": 1, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 1, "AGE": 42, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 60, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 62, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 61, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-22", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 62, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-14", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 14, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.4, "FBS": 121, "SCR": null, "EGFR": null, "LDL": 86, "TG": 130, "BW": 90.8, "HT": 159, "BMI": 35.92, "SBP": 137, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 62, "VISIT": 2, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 12, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 5.4, "FBS": 118, "SCR": 0.85, "EGFR": 80.71, "LDL": 69, "TG": 105, "BW": 90.9, "HT": 159, "BMI": 35.96, "SBP": 128, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 63, "VISIT": 1, "HN": null, "VISIT_DATE": "2026-03-18", "SEX": 0, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 64, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-13", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 65, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-06", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.7, "FBS": 149, "SCR": 0.65, "EGFR": 101.69, "LDL": 78, "TG": 111, "BW": 78, "HT": 145, "BMI": 37.1, "SBP": 159, "DBP": 104, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 65, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-08-20", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.9, "FBS": 117, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 75.5, "HT": 144, "BMI": 36.41, "SBP": 137, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 0}, {"NO": 65, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 87, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 76.7, "HT": 144, "BMI": 36.99, "SBP": 123, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 65, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.7, "FBS": 94, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 75.5, "HT": 144, "BMI": 36.41, "SBP": 126, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 65, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-03-25", "SEX": 0, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 106, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 78.1, "HT": 144, "BMI": 37.66, "SBP": 140, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 66, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-15", "SEX": 1, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 12.5, "FBS": 158, "SCR": 0.81, "EGFR": 97.28, "LDL": 219, "TG": 85, "BW": 56, "HT": 153.5, "BMI": 23.77, "SBP": 137, "DBP": 88, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 66, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 1, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 154, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 53.1, "HT": 153.5, "BMI": 22.54, "SBP": 120, "DBP": 66, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 66, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-01-28", "SEX": 1, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 13.4, "FBS": 170, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 54.9, "HT": 153.5, "BMI": 23.3, "SBP": 155, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 67, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-20", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 68, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-02-05", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.1, "FBS": 113, "SCR": 0.78, "EGFR": 79.47, "LDL": 146, "TG": 94, "BW": 65.1, "HT": 150.5, "BMI": 28.74, "SBP": 132, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 68, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-03-12", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 115, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 65.2, "HT": 150.5, "BMI": 28.79, "SBP": 134, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 68, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-04-09", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 126, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 65.8, "HT": 149.5, "BMI": 29.44, "SBP": 135, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 68, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-05-14", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 112, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 64.5, "HT": 149.5, "BMI": 28.86, "SBP": 132, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 68, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 146, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 64, "HT": 150, "BMI": 28.44, "SBP": 138, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 68, "VISIT": 6, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 113, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 57.8, "HT": 150, "BMI": 25.69, "SBP": 130, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 68, "VISIT": 7, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 92, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 58.8, "HT": 149, "BMI": 26.49, "SBP": 141, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-02-05", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8, "FBS": 143, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 56.2, "HT": 151, "BMI": 24.65, "SBP": 145, "DBP": 62, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-03-05", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Need for additional drug", "OTHERDRPS": null, "A1C": null, "FBS": 172, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 56.8, "HT": 151, "BMI": 24.91, "SBP": 130, "DBP": 61, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-03-19", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.4, "FBS": 127, "SCR": 0.56, "EGFR": 97.48, "LDL": 91, "TG": 114, "BW": 55.5, "HT": 151, "BMI": 24.34, "SBP": 132, "DBP": 65, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-04-23", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 141, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 54.1, "HT": 150.5, "BMI": 23.88, "SBP": 126, "DBP": 67, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 104, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 52, "HT": 150.5, "BMI": 22.96, "SBP": 125, "DBP": 69, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 6, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.3, "FBS": 112, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 56.2, "HT": 150.5, "BMI": 24.81, "SBP": 119, "DBP": 61, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 7, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 135, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 53.8, "HT": 151, "BMI": 23.6, "SBP": 133, "DBP": 66, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 69, "VISIT": 8, "HN": null, "VISIT_DATE": "2026-03-04", "SEX": 0, "AGE": 67, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.5, "FBS": 135, "SCR": 0.59, "EGFR": 95.15, "LDL": 101, "TG": 159, "BW": 55.1, "HT": 151, "BMI": 24.17, "SBP": 164, "DBP": 66, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 70, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 72, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 71, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-09", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 213, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70.5, "HT": 152, "BMI": 30.51, "SBP": 126, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 0}, {"NO": 71, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-30", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 154, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70.5, "HT": 152, "BMI": 30.51, "SBP": 113, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 71, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-05-14", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 8.7, "FBS": 125, "SCR": 0.62, "EGFR": 95.6, "LDL": 91, "TG": 116, "BW": 71.4, "HT": 152, "BMI": 30.9, "SBP": 132, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 71, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 181, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 71, "HT": 152, "BMI": 30.73, "SBP": 115, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 71, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 124, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67.9, "HT": 152.5, "BMI": 29.2, "SBP": 126, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 71, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-01-14", "SEX": 0, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 3, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 8.3, "FBS": 191, "SCR": null, "EGFR": null, "LDL": 93, "TG": 122, "BW": 70.8, "HT": 153, "BMI": 30.24, "SBP": 135, "DBP": 70, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 72, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 1, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 73, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-02", "SEX": 1, "AGE": 53, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.3, "FBS": 119, "SCR": 0.79, "EGFR": 103.24, "LDL": 58, "TG": 79, "BW": 84.1, "HT": 164.5, "BMI": 31.08, "SBP": 144, "DBP": 90, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 0}, {"NO": 73, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 1, "AGE": 53, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 121, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 86.8, "HT": 164, "BMI": 32.27, "SBP": 133, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 73, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 1, "AGE": 53, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.7, "FBS": 133, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 86.8, "HT": 164, "BMI": 32.27, "SBP": 139, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 73, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 1, "AGE": 53, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 156, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 93, "HT": 164, "BMI": 34.58, "SBP": 143, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 74, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-26", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7, "FBS": 146, "SCR": 0.66, "EGFR": 91.06, "LDL": 155, "TG": 142, "BW": 56.4, "HT": 159.5, "BMI": 22.17, "SBP": 150, "DBP": 97, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 74, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-23", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 57.2, "HT": 159, "BMI": 22.63, "SBP": 136, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 74, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": "Non-compliance", "A1C": null, "FBS": 121, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 56, "HT": 159, "BMI": 22.15, "SBP": 136, "DBP": 81, "HTCONTROL": 1, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 74, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.9, "FBS": 136, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 55.8, "HT": 158.5, "BMI": 22.21, "SBP": 132, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 74, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": null, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": 134, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 76, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-02", "SEX": 1, "AGE": 64, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 77, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-02-19", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.5, "FBS": 93, "SCR": null, "EGFR": null, "LDL": 98, "TG": 93, "BW": 66.3, "HT": 155, "BMI": 27.6, "SBP": 146, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 77, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-03-19", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 105, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 66.3, "HT": 155, "BMI": 27.6, "SBP": 146, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 77, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-04-30", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Without DRP", "OTHERDRPS": "Non-compliance", "A1C": null, "FBS": 107, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.5, "HT": 154, "BMI": 30.57, "SBP": 142, "DBP": 91, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 77, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 0, "AGE": 50, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.1, "FBS": 105, "SCR": 1.05, "EGFR": 62.51, "LDL": 81, "TG": 95, "BW": 73, "HT": 157, "BMI": 29.62, "SBP": 113, "DBP": 72, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 78, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-14", "SEX": 0, "AGE": 62, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 79, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-03", "SEX": 0, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 80, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-02-19", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 2, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.7, "FBS": 125, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 79.6, "HT": 168, "BMI": 28.2, "SBP": 167, "DBP": 105, "HTCONTROL": 0, "DLPCONTROL": 1, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 80, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-05-28", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 4, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.5, "FBS": 146, "SCR": 1.12, "EGFR": 72.02, "LDL": 149, "TG": 148, "BW": 79.3, "HT": 167.5, "BMI": 28.26, "SBP": 174, "DBP": 98, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 80, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-23", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 4, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 130, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 78.4, "HT": 167, "BMI": 28.11, "SBP": 151, "DBP": 91, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 80, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 7, "HTMED_COUNT": 4, "DLPMED_COUNT": 2, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.3, "FBS": 128, "SCR": null, "EGFR": null, "LDL": 167, "TG": 372, "BW": 77.8, "HT": 169, "BMI": 27.24, "SBP": 145, "DBP": 93, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 80, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 1, "AGE": 59, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 4, "DLPMED_COUNT": 2, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 147, "SCR": null, "EGFR": null, "LDL": 129, "TG": 372, "BW": 77.9, "HT": 166.5, "BMI": 28.1, "SBP": 148, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 81, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-29", "SEX": 0, "AGE": 64, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.6, "FBS": 103, "SCR": null, "EGFR": null, "LDL": 113, "TG": 99, "BW": 60, "HT": 152, "BMI": 25.97, "SBP": 140, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 81, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 0, "AGE": 64, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 76, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 59.3, "HT": 152, "BMI": 25.67, "SBP": 177, "DBP": 96, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 81, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-03-04", "SEX": 0, "AGE": 64, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 96, "SCR": 0.77, "EGFR": 81.86, "LDL": null, "TG": null, "BW": 61.8, "HT": 153, "BMI": 26.4, "SBP": 142, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-26", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8.1, "FBS": 127, "SCR": null, "EGFR": null, "LDL": 87, "TG": 72, "BW": 62.1, "HT": 167.5, "BMI": 22.13, "SBP": 160, "DBP": 96, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-05-21", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 156, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 69.3, "HT": 159, "BMI": 27.41, "SBP": 134, "DBP": 103, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-30", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 130, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 73.2, "HT": 160, "BMI": 28.59, "SBP": 124, "DBP": 98, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 136, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 73.2, "HT": 160, "BMI": 28.59, "SBP": 116, "DBP": 90, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-11-19", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 8.1, "FBS": 114, "SCR": 0.56, "EGFR": 109.84, "LDL": 92, "TG": 80, "BW": 73.2, "HT": 160, "BMI": 28.59, "SBP": 110, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 131, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.5, "HT": 160, "BMI": 28.32, "SBP": 123, "DBP": 92, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 82, "VISIT": 7, "HN": null, "VISIT_DATE": "2026-03-25", "SEX": 0, "AGE": 49, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8.8, "FBS": 150, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 72.4, "HT": 160, "BMI": 28.28, "SBP": 100, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 83, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-18", "SEX": 0, "AGE": 49, "SCHEME": "NRH", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 84, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 0, "AGE": 69, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 85, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-12", "SEX": 1, "AGE": 49, "SCHEME": "SSS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 86, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-10", "SEX": 1, "AGE": 52, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 5, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 6.4, "FBS": 153, "SCR": 1.21, "EGFR": 68.9, "LDL": 122, "TG": 194, "BW": 102.7, "HT": 170.5, "BMI": 35.33, "SBP": 139, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 86, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 1, "AGE": 52, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 5, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.3, "FBS": 130, "SCR": 0.99, "EGFR": 87.82, "LDL": null, "TG": null, "BW": 96.5, "HT": 170.5, "BMI": 33.2, "SBP": 138, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 86, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 52, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 95.4, "HT": 171, "BMI": 32.63, "SBP": 123, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 86, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 1, "AGE": 52, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 2, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 156, "SCR": null, "EGFR": null, "LDL": 118, "TG": 44, "BW": 101.9, "HT": 171, "BMI": 34.85, "SBP": 134, "DBP": 80, "HTCONTROL": 0, "DLPCONTROL": 2, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 86, "VISIT": 5, "HN": null, "VISIT_DATE": "2026-03-11", "SEX": 1, "AGE": 52, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 2, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.7, "FBS": 143, "SCR": null, "EGFR": null, "LDL": 104, "TG": 135, "BW": 102.9, "HT": 171.5, "BMI": 34.99, "SBP": 142, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 87, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-30", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 68.1, "HT": 163, "BMI": 25.63, "SBP": 122, "DBP": 52, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 87, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.3, "FBS": 134, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 66.4, "HT": 161.5, "BMI": 25.46, "SBP": 128, "DBP": 72, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 87, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-02-11", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.5, "FBS": 140, "SCR": 0.59, "EGFR": 101.36, "LDL": 59, "TG": 48, "BW": 68, "HT": 161.5, "BMI": 26.07, "SBP": 153, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 88, "VISIT": 1, "HN": null, "VISIT_DATE": "2026-02-11", "SEX": 1, "AGE": 54, "SCHEME": "SSS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 189, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70.6, "HT": 166.5, "BMI": 25.47, "SBP": 137, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 88, "VISIT": 2, "HN": null, "VISIT_DATE": "2026-03-11", "SEX": 1, "AGE": 54, "SCHEME": "SSS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 18.8, "FBS": 217, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 70.6, "HT": 166.5, "BMI": 25.47, "SBP": 133, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 89, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-04-02", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.1, "FBS": 122, "SCR": 0.83, "EGFR": 94.3, "LDL": 77, "TG": 106, "BW": 76.4, "HT": 159.5, "BMI": 30.03, "SBP": 139, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 89, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-30", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 120, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74.9, "HT": 160, "BMI": 29.26, "SBP": 137, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 89, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 2, "DRPS_TYPE": "Adverse drug reaction, Noncompliance", "OTHERDRPS": null, "A1C": 6.5, "FBS": 112, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74, "HT": 160, "BMI": 28.91, "SBP": 138, "DBP": 93, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 89, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 2, "DRPS_TYPE": "Adverse drug reaction, Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 114, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74, "HT": 160, "BMI": 28.91, "SBP": 125, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 89, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 108, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74.2, "HT": 160, "BMI": 28.98, "SBP": 135, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 89, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-03-04", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.6, "FBS": 105, "SCR": 0.78, "EGFR": 96.06, "LDL": 107, "TG": 108, "BW": 75.5, "HT": 160, "BMI": 29.49, "SBP": 129, "DBP": 83, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 90, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 38, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 138, "SCR": 0.75, "EGFR": 117.19, "LDL": null, "TG": null, "BW": 110.8, "HT": 165.5, "BMI": 40.45, "SBP": 145, "DBP": 102, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 90, "VISIT": 2, "HN": null, "VISIT_DATE": "2026-01-14", "SEX": 1, "AGE": 38, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 177, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 117, "HT": 165.5, "BMI": 42.72, "SBP": 162, "DBP": 98, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 91, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-06", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 92, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-05-07", "SEX": 0, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 132, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 50.8, "HT": 151.5, "BMI": 22.13, "SBP": 146, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 92, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-04", "SEX": 0, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 111, "SCR": 0.86, "EGFR": 72.63, "LDL": 128, "TG": 72, "BW": 49.6, "HT": 150.5, "BMI": 21.9, "SBP": 147, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 92, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 0, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.1, "FBS": 146, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 50.9, "HT": 152, "BMI": 22.03, "SBP": 149, "DBP": 86, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 1, "HYPERGLYCEMIA": 0}, {"NO": 92, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-12-17", "SEX": 0, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 117, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 50.5, "HT": 151.5, "BMI": 22.0, "SBP": 162, "DBP": 81, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 1}, {"NO": 93, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-22", "SEX": 1, "AGE": 72, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 94, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-13", "SEX": 1, "AGE": 68, "SCHEME": "OFC", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 95, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-05", "SEX": 0, "AGE": 45, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 9, "FBS": 220, "SCR": 0.51, "EGFR": 117.32, "LDL": 112, "TG": 137, "BW": 77.5, "HT": 156, "BMI": 31.85, "SBP": 124, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 95, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-03-19", "SEX": 0, "AGE": 45, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 173, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 75.2, "HT": 156, "BMI": 30.9, "SBP": 146, "DBP": 106, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 95, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 0, "AGE": 45, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.3, "FBS": 141, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 81, "HT": 156, "BMI": 33.28, "SBP": 145, "DBP": 84, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 95, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 0, "AGE": 45, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.5, "FBS": 146, "SCR": 0.57, "EGFR": 112.31, "LDL": 127, "TG": 94, "BW": 81.7, "HT": 155.5, "BMI": 33.79, "SBP": 115, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 95, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 0, "AGE": 45, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 134, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 81.6, "HT": 155, "BMI": 33.96, "SBP": 131, "DBP": 101, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 95, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-02-25", "SEX": 0, "AGE": 45, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 9, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 8.3, "FBS": 156, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 86.3, "HT": 155, "BMI": 35.92, "SBP": 127, "DBP": 97, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 96, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-10-01", "SEX": 1, "AGE": 54, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 97, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 1, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 2, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": "Adverse drug reaction", "A1C": 7.4, "FBS": 134, "SCR": 1.01, "EGFR": 76.61, "LDL": 108, "TG": 179, "BW": 72.3, "HT": 168, "BMI": 25.62, "SBP": 132, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 97, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 1, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 111, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 75.7, "HT": 168, "BMI": 26.82, "SBP": 114, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 97, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 1, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.8, "FBS": 92, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74.7, "HT": 166, "BMI": 27.11, "SBP": 135, "DBP": 88, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 97, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-03-18", "SEX": 1, "AGE": 68, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 109, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74.7, "HT": 166, "BMI": 27.11, "SBP": 127, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 98, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-12", "SEX": 1, "AGE": 35, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 4, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 5.9, "FBS": 120, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 94, "HT": 181, "BMI": 28.69, "SBP": 102, "DBP": 53, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 98, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-18", "SEX": 1, "AGE": 35, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.9, "FBS": 106, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 98.4, "HT": 179.5, "BMI": 30.54, "SBP": 119, "DBP": 79, "HTCONTROL": 1, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 98, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-09-24", "SEX": 1, "AGE": 35, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.9, "FBS": 103, "SCR": 0.88, "EGFR": 112.07, "LDL": 65, "TG": 299, "BW": 99, "HT": 181, "BMI": 30.22, "SBP": 136, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 98, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-01-07", "SEX": 1, "AGE": 35, "SCHEME": "OFC", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 2, "DLPMED_COUNT": 1, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 139, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 96.3, "HT": 181, "BMI": 29.39, "SBP": 128, "DBP": 72, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 99, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-06-25", "SEX": 1, "AGE": 60, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 100, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-07-08", "SEX": 1, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 8, "HTMED_COUNT": 4, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.8, "FBS": 136, "SCR": null, "EGFR": null, "LDL": 101, "TG": 96, "BW": 73, "HT": 164, "BMI": 27.14, "SBP": 137, "DBP": 72, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 100, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-10-15", "SEX": 1, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 8, "HTMED_COUNT": 4, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 144, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 74.1, "HT": 164, "BMI": 27.55, "SBP": 149, "DBP": 79, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 100, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-01-28", "SEX": 1, "AGE": 65, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 4, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.2, "FBS": 153, "SCR": 0.92, "EGFR": 86.97, "LDL": 95, "TG": 103, "BW": 76, "HT": 164, "BMI": 28.26, "SBP": 155, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 101, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 60, "SCHEME": "SSS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 102, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-05", "SEX": 1, "AGE": 63, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 103, "VISIT": 1, "HN": null, "VISIT_DATE": "2026-03-25", "SEX": 1, "AGE": 62, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 104, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-05", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 190, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 69.7, "HT": 151.5, "BMI": 30.37, "SBP": 159, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-06-11", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": 7.6, "FBS": 162, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 71, "HT": 151, "BMI": 31.14, "SBP": 132, "DBP": 97, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-07-09", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 141, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 71, "HT": 151, "BMI": 31.14, "SBP": 118, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-09-17", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.3, "FBS": 174, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67.8, "HT": 151.5, "BMI": 29.54, "SBP": 161, "DBP": 106, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 163, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 68.6, "HT": 151.5, "BMI": 29.89, "SBP": 137, "DBP": 89, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 6, "HN": null, "VISIT_DATE": "2026-03-04", "SEX": 0, "AGE": 57, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 7, "HTMED_COUNT": 3, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7, "FBS": 131, "SCR": 0.66, "EGFR": 98.37, "LDL": 132, "TG": 88, "BW": 69, "HT": 152, "BMI": 29.86, "SBP": 150, "DBP": 94, "HTCONTROL": 2, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 103, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-05", "SEX": 0, "AGE": 44, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": null, "HTMED_COUNT": null, "DLPMED_COUNT": null, "DMMED_COUNT": null, "DRPS_COUNT": null, "DRPS_TYPE": null, "OTHERDRPS": null, "A1C": null, "FBS": null, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": null, "HT": null, "BMI": null, "SBP": null, "DBP": null, "HTCONTROL": null, "DLPCONTROL": null, "DMCONTROL": null, "HYPOGLYCEMIA": null, "HYPERGLYCEMIA": null}, {"NO": 104, "VISIT": 7, "HN": null, "VISIT_DATE": "2025-08-06", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.2, "FBS": 144, "SCR": 0.77, "EGFR": 85.38, "LDL": 107, "TG": 55, "BW": 69.9, "HT": 154, "BMI": 29.47, "SBP": 139, "DBP": 78, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 8, "HN": null, "VISIT_DATE": "2025-09-03", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 131, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 69.9, "HT": 154, "BMI": 29.47, "SBP": 118, "DBP": 75, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 9, "HN": null, "VISIT_DATE": "2025-12-03", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.2, "FBS": 126, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 67.6, "HT": 155, "BMI": 28.14, "SBP": 143, "DBP": 85, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 104, "VISIT": 10, "HN": null, "VISIT_DATE": "2026-03-11", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 5, "HTMED_COUNT": 0, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 133, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 69.9, "HT": 154, "BMI": 29.47, "SBP": 136, "DBP": 74, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 105, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-08-06", "SEX": 1, "AGE": 71, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 1, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 123, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 62.3, "HT": 164, "BMI": 23.16, "SBP": 113, "DBP": 68, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 105, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-09-03", "SEX": 1, "AGE": 71, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 6.4, "FBS": 107, "SCR": 1.28, "EGFR": 55.93, "LDL": 81, "TG": 79, "BW": 63, "HT": 164, "BMI": 23.42, "SBP": 129, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 1, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 105, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-10-29", "SEX": 1, "AGE": 71, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 5, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 132, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 63, "HT": 164, "BMI": 23.42, "SBP": 129, "DBP": 82, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 105, "VISIT": 4, "HN": null, "VISIT_DATE": "2026-01-21", "SEX": 1, "AGE": 71, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 6, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 120, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 63, "HT": 164, "BMI": 23.42, "SBP": 159, "DBP": 90, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 106, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-03-12", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 2, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 1, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.1, "FBS": 110, "SCR": 0.79, "EGFR": 79.36, "LDL": 108, "TG": 57, "BW": 47.9, "HT": 155, "BMI": 19.94, "SBP": 119, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 106, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-04-09", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 1, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.6, "FBS": 104, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 49.3, "HT": 154.5, "BMI": 20.65, "SBP": 119, "DBP": 73, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 1, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 106, "VISIT": 3, "HN": null, "VISIT_DATE": "2025-05-07", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 1, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 115, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 45.8, "HT": 155, "BMI": 19.06, "SBP": 130, "DBP": 77, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 106, "VISIT": 4, "HN": null, "VISIT_DATE": "2025-06-04", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 1, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": null, "FBS": 123, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 49.8, "HT": 154, "BMI": 21.0, "SBP": 130, "DBP": 67, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 106, "VISIT": 5, "HN": null, "VISIT_DATE": "2025-09-10", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 1, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.7, "FBS": 116, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 49.4, "HT": 155, "BMI": 20.56, "SBP": 117, "DBP": 61, "HTCONTROL": 1, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 106, "VISIT": 6, "HN": null, "VISIT_DATE": "2025-12-24", "SEX": 0, "AGE": 66, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 1, "HTMED_COUNT": 1, "DLPMED_COUNT": 0, "DMMED_COUNT": 0, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 5.9, "FBS": 106, "SCR": 0.77, "EGFR": 81.29, "LDL": 108, "TG": 46, "BW": 48.7, "HT": 155.5, "BMI": 20.14, "SBP": 103, "DBP": 66, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 107, "VISIT": 1, "HN": null, "VISIT_DATE": "2025-09-03", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 3, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 10.3, "FBS": 124, "SCR": 0.67, "EGFR": 97.2, "LDL": 108, "TG": 243, "BW": 44.2, "HT": 150, "BMI": 19.64, "SBP": 97, "DBP": 57, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 107, "VISIT": 2, "HN": null, "VISIT_DATE": "2025-11-26", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 0, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 0, "DRPS_TYPE": "Without DRP", "OTHERDRPS": null, "A1C": 7.4, "FBS": 188, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 45.8, "HT": 150, "BMI": 20.36, "SBP": 133, "DBP": 76, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 0, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}, {"NO": 107, "VISIT": 3, "HN": null, "VISIT_DATE": "2026-02-25", "SEX": 0, "AGE": 58, "SCHEME": "UCS", "POSTCOUNS": 1, "ALLMED_COUNT": 2, "HTMED_COUNT": 0, "DLPMED_COUNT": 0, "DMMED_COUNT": 2, "DRPS_COUNT": 1, "DRPS_TYPE": "Noncompliance", "OTHERDRPS": null, "A1C": null, "FBS": 161, "SCR": null, "EGFR": null, "LDL": null, "TG": null, "BW": 46.2, "HT": 150, "BMI": 20.53, "SBP": 107, "DBP": 71, "HTCONTROL": 0, "DLPCONTROL": 0, "DMCONTROL": 2, "HYPOGLYCEMIA": 0, "HYPERGLYCEMIA": 0}];
+
+// ==================== GLOBALS ====================
+let filteredData = [...RAW_DATA];
+let chartInstances = {};
+
+// ==================== UTILITIES ====================
+function countBy(arr, key) {
+  const counts = {};
+  arr.forEach(d => {
+    const v = d[key];
+    if (v != null) counts[v] = (counts[v] || 0) + 1;
+  });
+  return counts;
+}
+
+function avg(arr) {
+  const valid = arr.filter(v => v != null);
+  return valid.length ? valid.reduce((a,b) => a+b, 0) / valid.length : 0;
+}
+
+function pct(num, den) { return den ? Math.round(num / den * 1000) / 10 : 0; }
+
+function uniquePatients(data) {
+  return new Set(data.map(d => d.NO)).size;
+}
+
+function getFirstVisits(data) {
+  const seen = {};
+  return data.filter(d => {
+    if (seen[d.NO]) return false;
+    seen[d.NO] = true;
+    return true;
+  });
+}
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+const COLORS = {
+  blue: '#3b82f6', red: '#ef4444', green: '#22c55e', orange: '#f97316',
+  purple: '#8b5cf6', teal: '#14b8a6', pink: '#ec4899', yellow: '#eab308',
+  indigo: '#6366f1', cyan: '#06b6d4',
+  blueA: 'rgba(59,130,246,.7)', redA: 'rgba(239,68,68,.7)', greenA: 'rgba(34,197,94,.7)',
+  orangeA: 'rgba(249,115,22,.7)', purpleA: 'rgba(139,92,246,.7)', tealA: 'rgba(20,184,166,.7)',
+};
+
+const CTRL_LABELS = {0: 'ไม่ปรับ', 1: 'ลดยา', 2: 'เพิ่มยา', 3: 'เปลี่ยนยา'};
+const CTRL_COLORS = ['#94a3b8', '#22c55e', '#ef4444', '#f59e0b'];
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  Chart.register(ChartDataLabels);
+  Chart.defaults.plugins.datalabels.display = false;
+  initFilters();
+  initTabs();
+  applyFilters();
+});
+
+function initTabs() {
+  document.querySelectorAll('#navTabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#navTabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      const tab = document.getElementById('tab-' + btn.dataset.tab);
+      tab.classList.add('active');
+      tab.classList.add('fade-in');
+      renderCurrentTab();
+    });
+  });
+  document.getElementById('btnSearch').addEventListener('click', searchPatient);
+  document.getElementById('patientSearch').addEventListener('keypress', e => { if(e.key==='Enter') searchPatient(); });
+}
+
+function initFilters() {
+  const schemes = [...new Set(RAW_DATA.map(d=>d.SCHEME).filter(Boolean))].sort();
+  const sel = document.getElementById('filterScheme');
+  schemes.forEach(s => { const o = document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+
+  const visits = [...new Set(RAW_DATA.map(d=>d.VISIT))].sort((a,b)=>a-b);
+  const vsel = document.getElementById('filterVisit');
+  visits.forEach(v => { const o = document.createElement('option'); o.value=v; o.textContent='ครั้งที่ '+v; vsel.appendChild(o); });
+
+  ['filterSex','filterAge','filterScheme','filterVisit','filterPharmacy','filterRemission'].forEach(id => {
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+  document.getElementById('btnReset').addEventListener('click', () => {
+    ['filterSex','filterAge','filterScheme','filterVisit','filterPharmacy','filterRemission'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    applyFilters();
+  });
+}
+
+function applyFilters() {
+  let data = [...RAW_DATA];
+  const sex = document.getElementById('filterSex').value;
+  const age = document.getElementById('filterAge').value;
+  const scheme = document.getElementById('filterScheme').value;
+  const visit = document.getElementById('filterVisit').value;
+  const pharmacy = document.getElementById('filterPharmacy').value;
+  const remission = document.getElementById('filterRemission').value;
+
+  if (sex !== '') data = data.filter(d => d.SEX == sex);
+  if (age) {
+    const [lo, hi] = age.split('-').map(Number);
+    data = data.filter(d => d.AGE != null && d.AGE >= lo && d.AGE < hi);
+  }
+  if (scheme) data = data.filter(d => d.SCHEME === scheme);
+  if (visit) data = data.filter(d => d.VISIT == visit);
+  if (pharmacy === 'poly') data = data.filter(d => d.ALLMED_COUNT != null && d.ALLMED_COUNT > 5);
+  if (pharmacy === 'normal') data = data.filter(d => d.ALLMED_COUNT != null && d.ALLMED_COUNT <= 5);
+  if (remission === 'remission') data = data.filter(d => d.DMMED_COUNT === 0);
+  if (remission === 'normal') data = data.filter(d => d.DMMED_COUNT != null && d.DMMED_COUNT > 0);
+
+  filteredData = data;
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  const active = document.querySelector('#navTabs button.active').dataset.tab;
+  const renderers = {
+    overview: renderOverview, dm: renderDM, dlp: renderDLP, ht: renderHT,
+    pharmacy: renderPharmacy, drps: renderDRPs, demographics: renderDemographics, patient: ()=>{}
+  };
+  if (renderers[active]) renderers[active]();
+}
+
+// ==================== KPI HELPER ====================
+function renderKPIs(containerId, kpis) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = kpis.map(k => `
+    <div class="kpi-card ${k.cls||''}">
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+      ${k.sub ? '<div class="kpi-sub">'+k.sub+'</div>' : ''}
+    </div>
+  `).join('');
+}
+
+// ==================== HISTOGRAM HELPER ====================
+function makeHistogram(values, bins) {
+  const counts = new Array(bins.length - 1).fill(0);
+  values.forEach(v => {
+    for (let i = 0; i < bins.length - 1; i++) {
+      if (v >= bins[i] && v < bins[i+1]) { counts[i]++; break; }
+      if (i === bins.length - 2 && v >= bins[i]) { counts[i]++; }
+    }
+  });
+  const labels = [];
+  for (let i = 0; i < bins.length - 1; i++) {
+    labels.push(i === bins.length - 2 ? `${bins[i]}+` : `${bins[i]}-${bins[i+1]}`);
+  }
+  return { labels, counts };
+}
+
+// ==================== OVERVIEW ====================
+function renderOverview() {
+  const d = filteredData;
+  const nPt = uniquePatients(d);
+  const a1cGoal = d.filter(r => r.A1C != null && r.A1C < 6.5).length;
+  const a1cTotal = d.filter(r => r.A1C != null).length;
+  const fbsGoal = d.filter(r => r.FBS != null && r.FBS < 120).length;
+  const fbsTotal = d.filter(r => r.FBS != null).length;
+  const polyCount = d.filter(r => r.ALLMED_COUNT != null && r.ALLMED_COUNT > 5).length;
+  const remCount = d.filter(r => r.DMMED_COUNT === 0).length;
+
+  renderKPIs('kpiOverview', [
+    { value: nPt, label: 'ผู้ป่วย', sub: `${d.length} การเยี่ยมทั้งหมด`, cls: '' },
+    { value: pct(a1cGoal, a1cTotal)+'%', label: 'เป้าหมาย A1C (<6.5)', sub: `${a1cGoal}/${a1cTotal}`, cls: a1cGoal/a1cTotal > 0.5 ? 'success' : 'danger' },
+    { value: pct(fbsGoal, fbsTotal)+'%', label: 'เป้าหมาย FBS (<120)', sub: `${fbsGoal}/${fbsTotal}`, cls: fbsGoal/fbsTotal > 0.5 ? 'success' : 'danger' },
+    { value: pct(polyCount, d.length)+'%', label: 'Polypharmacy', sub: `${polyCount} การเยี่ยม (ยา>5)`, cls: 'warning' },
+    { value: remCount, label: 'DM Remission', sub: `จำนวนยา DM = 0`, cls: 'purple' },
+    { value: avg(d.map(r=>r.A1C)).toFixed(1), label: 'A1C เฉลี่ย', cls: 'teal' },
+  ]);
+
+  // Goal Achievement Bar Chart
+  destroyChart('chartGoals');
+  const ldlGoal = d.filter(r=>r.LDL!=null&&r.LDL<90).length;
+  const ldlTot = d.filter(r=>r.LDL!=null).length;
+  const tgGoal = d.filter(r=>r.TG!=null&&r.TG<150).length;
+  const tgTot = d.filter(r=>r.TG!=null).length;
+  const sbpGoal = d.filter(r=>r.SBP!=null&&r.SBP<130).length;
+  const sbpTot = d.filter(r=>r.SBP!=null).length;
+  const dbpGoal = d.filter(r=>r.DBP!=null&&r.DBP<80).length;
+  const dbpTot = d.filter(r=>r.DBP!=null).length;
+
+  chartInstances['chartGoals'] = new Chart(document.getElementById('chartGoals'), {
+    type: 'bar',
+    data: {
+      labels: ['A1C<6.5','FBS<120','LDL<90','TG<150','SBP<130','DBP<80'],
+      datasets: [
+        { label: 'บรรลุเป้าหมาย', data: [pct(a1cGoal,a1cTotal),pct(fbsGoal,fbsTotal),pct(ldlGoal,ldlTot),pct(tgGoal,tgTot),pct(sbpGoal,sbpTot),pct(dbpGoal,dbpTot)], backgroundColor: COLORS.greenA },
+        { label: 'ไม่บรรลุเป้าหมาย', data: [pct(a1cTotal-a1cGoal,a1cTotal),pct(fbsTotal-fbsGoal,fbsTotal),pct(ldlTot-ldlGoal,ldlTot),pct(tgTot-tgGoal,tgTot),pct(sbpTot-sbpGoal,sbpTot),pct(dbpTot-dbpGoal,dbpTot)], backgroundColor: COLORS.redA }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true }, y: { stacked: true, max: 100, title: { display: true, text: '%' } } },
+      plugins: { datalabels: { display: ctx => ctx.dataset.data[ctx.dataIndex] > 5, color: '#fff', font: { weight: 'bold', size: 11 }, formatter: v => v+'%' } }
+    }
+  });
+
+  // Med Adjustment overview
+  destroyChart('chartMedAdj');
+  const dmCtrl = countBy(d.filter(r=>r.DMCONTROL!=null),'DMCONTROL');
+  const dlpCtrl = countBy(d.filter(r=>r.DLPCONTROL!=null),'DLPCONTROL');
+  const htCtrl = countBy(d.filter(r=>r.HTCONTROL!=null),'HTCONTROL');
+  chartInstances['chartMedAdj'] = new Chart(document.getElementById('chartMedAdj'), {
+    type: 'bar',
+    data: {
+      labels: ['No Change','Decrease','Increase','Switch'],
+      datasets: [
+        { label: 'DM', data: [dmCtrl[0]||0, dmCtrl[1]||0, dmCtrl[2]||0, dmCtrl[3]||0], backgroundColor: COLORS.blueA },
+        { label: 'DLP', data: [dlpCtrl[0]||0, dlpCtrl[1]||0, dlpCtrl[2]||0, dlpCtrl[3]||0], backgroundColor: COLORS.orangeA },
+        { label: 'HT', data: [htCtrl[0]||0, htCtrl[1]||0, htCtrl[2]||0, htCtrl[3]||0], backgroundColor: COLORS.purpleA }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
+  });
+
+  // A1C Distribution
+  destroyChart('chartA1CDist');
+  const a1cVals = d.map(r=>r.A1C).filter(v=>v!=null);
+  const a1cHist = makeHistogram(a1cVals, [4,5,5.5,6,6.5,7,7.5,8,9,10,15]);
+  const a1cColors = a1cHist.labels.map((l,i) => {
+    const upper = [5,5.5,6,6.5,7,7.5,8,9,10,15][i];
+    return upper <= 6.5 ? COLORS.greenA : upper <= 7.5 ? COLORS.orangeA : COLORS.redA;
+  });
+  chartInstances['chartA1CDist'] = new Chart(document.getElementById('chartA1CDist'), {
+    type: 'bar',
+    data: { labels: a1cHist.labels, datasets: [{ label: 'จำนวน', data: a1cHist.counts, backgroundColor: a1cColors }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, datalabels: { display: ctx => ctx.dataset.data[ctx.dataIndex] > 0, anchor: 'end', align: 'top', font: { size: 11 } } },
+      scales: { y: { title: { display: true, text: 'จำนวน' } }, x: { title: { display: true, text: 'A1C' } } }
+    }
+  });
+
+  // Timeline
+  destroyChart('chartTimeline');
+  const byMonth = {};
+  d.forEach(r => {
+    if (!r.VISIT_DATE) return;
+    const m = r.VISIT_DATE.substring(0, 7);
+    byMonth[m] = (byMonth[m] || 0) + 1;
+  });
+  const months = Object.keys(byMonth).sort();
+  chartInstances['chartTimeline'] = new Chart(document.getElementById('chartTimeline'), {
+    type: 'line',
+    data: { labels: months, datasets: [{ label: 'การเยี่ยม', data: months.map(m=>byMonth[m]), borderColor: COLORS.blue, backgroundColor: COLORS.blueA, fill: true, tension: .3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
+  });
+}
+
+// ==================== DM CONTROL ====================
+function renderDM() {
+  const d = filteredData;
+  const a1cVals = d.filter(r=>r.A1C!=null);
+  const fbsVals = d.filter(r=>r.FBS!=null);
+  const a1cGoal = a1cVals.filter(r=>r.A1C<6.5).length;
+  const fbsGoal = fbsVals.filter(r=>r.FBS<120).length;
+  const dmAdj = d.filter(r=>r.DMCONTROL!=null && r.DMCONTROL>0).length;
+
+  renderKPIs('kpiDM', [
+    { value: pct(a1cGoal, a1cVals.length)+'%', label: 'เป้าหมาย A1C (<6.5)', sub: `${a1cGoal}/${a1cVals.length}`, cls: a1cGoal/a1cVals.length > 0.5 ? 'success' : 'danger' },
+    { value: pct(fbsGoal, fbsVals.length)+'%', label: 'เป้าหมาย FBS (<120)', sub: `${fbsGoal}/${fbsVals.length}`, cls: fbsGoal/fbsVals.length > 0.5 ? 'success' : 'danger' },
+    { value: avg(a1cVals.map(r=>r.A1C)).toFixed(1), label: 'A1C เฉลี่ย (DM)', cls: 'teal' },
+    { value: avg(fbsVals.map(r=>r.FBS)).toFixed(0), label: 'FBS เฉลี่ย', cls: 'teal' },
+    { value: dmAdj, label: 'การปรับยา', sub: `จาก ${d.filter(r=>r.DMCONTROL!=null).length} การเยี่ยม`, cls: 'warning' },
+  ]);
+
+  // A1C histogram
+  destroyChart('chartA1C');
+  const a1cH = makeHistogram(a1cVals.map(r=>r.A1C), [4,5,5.5,6,6.5,7,7.5,8,9,10,15]);
+  const a1cC = a1cH.labels.map((_,i) => [5,5.5,6,6.5,7,7.5,8,9,10,15][i] <= 6.5 ? COLORS.greenA : COLORS.redA);
+  chartInstances['chartA1C'] = new Chart(document.getElementById('chartA1C'), {
+    type: 'bar',
+    data: { labels: a1cH.labels, datasets: [{ label: 'จำนวน', data: a1cH.counts, backgroundColor: a1cC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display: ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} }, scales: { y: {title:{display:true,text:'จำนวน'}}, x: {title:{display:true,text:'A1C'}} } }
+  });
+
+  // FBS histogram
+  destroyChart('chartFBS');
+  const fbsH = makeHistogram(fbsVals.map(r=>r.FBS), [60,80,100,120,140,160,180,200,250,400]);
+  const fbsC = fbsH.labels.map((_,i) => [80,100,120,140,160,180,200,250,400][i] <= 120 ? COLORS.greenA : COLORS.redA);
+  chartInstances['chartFBS'] = new Chart(document.getElementById('chartFBS'), {
+    type: 'bar',
+    data: { labels: fbsH.labels, datasets: [{ label: 'จำนวน', data: fbsH.counts, backgroundColor: fbsC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display: ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} }, scales: { y: {title:{display:true,text:'จำนวน'}}, x: {title:{display:true,text:'FBS (mg/dL)'}} } }
+  });
+
+  // DM Control pie
+  destroyChart('chartDMCtrl');
+  const dmC = countBy(d.filter(r=>r.DMCONTROL!=null), 'DMCONTROL');
+  chartInstances['chartDMCtrl'] = new Chart(document.getElementById('chartDMCtrl'), {
+    type: 'doughnut',
+    data: { labels: [0,1,2,3].map(i=>CTRL_LABELS[i]), datasets: [{ data: [dmC[0]||0, dmC[1]||0, dmC[2]||0, dmC[3]||0], backgroundColor: CTRL_COLORS }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font: {weight:'bold',size:12}, formatter: (v,ctx) => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return v>0 ? Math.round(v/t*100)+'%' : ''; } } } }
+  });
+
+  // A1C vs DM Control grouped bar
+  destroyChart('chartA1CvsDM');
+  const groups = {0:[],1:[],2:[],3:[]};
+  d.forEach(r => { if(r.A1C!=null && r.DMCONTROL!=null) groups[r.DMCONTROL].push(r.A1C); });
+  const goalRates = [0,1,2,3].map(g => { const vals = groups[g]; return vals.length ? pct(vals.filter(v=>v<6.5).length, vals.length) : 0; });
+  const avgA1Cs = [0,1,2,3].map(g => { const vals = groups[g]; return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 0; });
+  chartInstances['chartA1CvsDM'] = new Chart(document.getElementById('chartA1CvsDM'), {
+    type: 'bar',
+    data: {
+      labels: [0,1,2,3].map(i=>CTRL_LABELS[i]),
+      datasets: [
+        { label: 'อัตราบรรลุเป้า A1C %', data: goalRates, backgroundColor: COLORS.greenA, yAxisID: 'y' },
+        { label: 'A1C เฉลี่ย', data: avgA1Cs, type: 'line', borderColor: COLORS.red, backgroundColor: COLORS.red, pointRadius: 5, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { position:'left', title:{display:true,text:'อัตราบรรลุเป้าหมาย %'}, max: 100 }, y1: { position:'right', title:{display:true,text:'A1C เฉลี่ย'}, grid:{drawOnChartArea:false} } },
+      plugins: { datalabels: { display: false } }
+    }
+  });
+
+  // Summary table
+  const visitNums = [...new Set(d.map(r=>r.VISIT))].sort((a,b)=>a-b);
+  let html = '<table><thead><tr><th>ครั้ง</th><th>จำนวน</th><th>A1C เฉลี่ย</th><th>A1C ถึงเป้า%</th><th>FBS เฉลี่ย</th><th>FBS ถึงเป้า%</th><th>ปรับยา%</th></tr></thead><tbody>';
+  visitNums.forEach(v => {
+    const vd = d.filter(r=>r.VISIT===v);
+    const va1c = vd.filter(r=>r.A1C!=null);
+    const vfbs = vd.filter(r=>r.FBS!=null);
+    html += `<tr><td>${v}</td><td>${vd.length}</td>
+      <td>${va1c.length ? avg(va1c.map(r=>r.A1C)).toFixed(1) : '-'}</td>
+      <td><span class="badge ${va1c.length && va1c.filter(r=>r.A1C<6.5).length/va1c.length>0.5?'badge-success':'badge-danger'}">${va1c.length ? pct(va1c.filter(r=>r.A1C<6.5).length, va1c.length)+'%' : '-'}</span></td>
+      <td>${vfbs.length ? avg(vfbs.map(r=>r.FBS)).toFixed(0) : '-'}</td>
+      <td><span class="badge ${vfbs.length && vfbs.filter(r=>r.FBS<120).length/vfbs.length>0.5?'badge-success':'badge-danger'}">${vfbs.length ? pct(vfbs.filter(r=>r.FBS<120).length, vfbs.length)+'%' : '-'}</span></td>
+      <td>${pct(vd.filter(r=>r.DMCONTROL!=null&&r.DMCONTROL>0).length, vd.filter(r=>r.DMCONTROL!=null).length)}%</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('tableDMSummary').innerHTML = html;
+}
+
+// ==================== DLP CONTROL ====================
+function renderDLP() {
+  const d = filteredData;
+  const ldlVals = d.filter(r=>r.LDL!=null);
+  const tgVals = d.filter(r=>r.TG!=null);
+  const ldlGoal = ldlVals.filter(r=>r.LDL<90).length;
+  const tgGoal = tgVals.filter(r=>r.TG<150).length;
+
+  renderKPIs('kpiDLP', [
+    { value: pct(ldlGoal, ldlVals.length)+'%', label: 'เป้าหมาย LDL (<90)', sub: `${ldlGoal}/${ldlVals.length}`, cls: ldlGoal/ldlVals.length > 0.4 ? 'success' : 'danger' },
+    { value: pct(tgGoal, tgVals.length)+'%', label: 'เป้าหมาย TG (<150)', sub: `${tgGoal}/${tgVals.length}`, cls: tgGoal/tgVals.length > 0.5 ? 'success' : 'danger' },
+    { value: avg(ldlVals.map(r=>r.LDL)).toFixed(0), label: 'LDL เฉลี่ย', cls: 'teal' },
+    { value: avg(tgVals.map(r=>r.TG)).toFixed(0), label: 'TG เฉลี่ย', cls: 'teal' },
+  ]);
+
+  destroyChart('chartLDL');
+  const ldlH = makeHistogram(ldlVals.map(r=>r.LDL), [30,60,90,120,150,180,210,300]);
+  const ldlC = ldlH.labels.map((_,i) => [60,90,120,150,180,210,300][i] <= 90 ? COLORS.greenA : COLORS.redA);
+  chartInstances['chartLDL'] = new Chart(document.getElementById('chartLDL'), {
+    type: 'bar',
+    data: { labels: ldlH.labels, datasets: [{ label: 'จำนวน', data: ldlH.counts, backgroundColor: ldlC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} } }
+  });
+
+  destroyChart('chartTG');
+  const tgH = makeHistogram(tgVals.map(r=>r.TG), [40,80,120,150,200,250,300,500]);
+  const tgC = tgH.labels.map((_,i) => [80,120,150,200,250,300,500][i] <= 150 ? COLORS.greenA : COLORS.redA);
+  chartInstances['chartTG'] = new Chart(document.getElementById('chartTG'), {
+    type: 'bar',
+    data: { labels: tgH.labels, datasets: [{ label: 'จำนวน', data: tgH.counts, backgroundColor: tgC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} } }
+  });
+
+  destroyChart('chartDLPCtrl');
+  const dlpC = countBy(d.filter(r=>r.DLPCONTROL!=null), 'DLPCONTROL');
+  chartInstances['chartDLPCtrl'] = new Chart(document.getElementById('chartDLPCtrl'), {
+    type: 'doughnut',
+    data: { labels: [0,1,2].map(i=>CTRL_LABELS[i]), datasets: [{ data: [dlpC[0]||0, dlpC[1]||0, dlpC[2]||0], backgroundColor: CTRL_COLORS.slice(0,3) }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font:{weight:'bold',size:12}, formatter:(v,ctx)=>{ const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return v>0?Math.round(v/t*100)+'%':''; } } } }
+  });
+
+  destroyChart('chartLDLvsDLP');
+  const grp = {0:[],1:[],2:[]};
+  d.forEach(r => { if(r.LDL!=null && r.DLPCONTROL!=null && grp[r.DLPCONTROL]) grp[r.DLPCONTROL].push(r.LDL); });
+  chartInstances['chartLDLvsDLP'] = new Chart(document.getElementById('chartLDLvsDLP'), {
+    type: 'bar',
+    data: {
+      labels: [0,1,2].map(i=>CTRL_LABELS[i]),
+      datasets: [
+        { label: 'อัตราบรรลุเป้า LDL %', data: [0,1,2].map(g=>{ const v=grp[g]; return v.length?pct(v.filter(x=>x<90).length,v.length):0; }), backgroundColor: COLORS.greenA, yAxisID:'y' },
+        { label: 'LDL เฉลี่ย', data: [0,1,2].map(g=>{ const v=grp[g]; return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(0):0; }), type:'line', borderColor: COLORS.red, pointRadius:5, yAxisID:'y1' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y:{position:'left',title:{display:true,text:'อัตราบรรลุเป้าหมาย %'},max:100}, y1:{position:'right',title:{display:true,text:'LDL เฉลี่ย'},grid:{drawOnChartArea:false}} }, plugins:{datalabels:{display:false}} }
+  });
+}
+
+// ==================== HT CONTROL ====================
+function renderHT() {
+  const d = filteredData;
+  const sbpVals = d.filter(r=>r.SBP!=null);
+  const dbpVals = d.filter(r=>r.DBP!=null);
+  const sbpGoal = sbpVals.filter(r=>r.SBP<130).length;
+  const dbpGoal = dbpVals.filter(r=>r.DBP<80).length;
+
+  renderKPIs('kpiHT', [
+    { value: pct(sbpGoal, sbpVals.length)+'%', label: 'เป้าหมาย SBP (<130)', sub: `${sbpGoal}/${sbpVals.length}`, cls: sbpGoal/sbpVals.length > 0.5 ? 'success' : 'danger' },
+    { value: pct(dbpGoal, dbpVals.length)+'%', label: 'เป้าหมาย DBP (<80)', sub: `${dbpGoal}/${dbpVals.length}`, cls: dbpGoal/dbpVals.length > 0.5 ? 'success' : 'danger' },
+    { value: avg(sbpVals.map(r=>r.SBP)).toFixed(0), label: 'SBP เฉลี่ย', cls: 'teal' },
+    { value: avg(dbpVals.map(r=>r.DBP)).toFixed(0), label: 'DBP เฉลี่ย', cls: 'teal' },
+  ]);
+
+  destroyChart('chartSBP');
+  const sbpH = makeHistogram(sbpVals.map(r=>r.SBP), [90,110,120,130,140,150,160,180,220]);
+  const sbpC = sbpH.labels.map((_,i) => [110,120,130,140,150,160,180,220][i] <= 130 ? COLORS.greenA : COLORS.redA);
+  chartInstances['chartSBP'] = new Chart(document.getElementById('chartSBP'), {
+    type: 'bar',
+    data: { labels: sbpH.labels, datasets: [{ label: 'จำนวน', data: sbpH.counts, backgroundColor: sbpC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} } }
+  });
+
+  destroyChart('chartDBP');
+  const dbpH = makeHistogram(dbpVals.map(r=>r.DBP), [50,60,70,80,90,100,110,130]);
+  const dbpC = dbpH.labels.map((_,i) => [60,70,80,90,100,110,130][i] <= 80 ? COLORS.greenA : COLORS.redA);
+  chartInstances['chartDBP'] = new Chart(document.getElementById('chartDBP'), {
+    type: 'bar',
+    data: { labels: dbpH.labels, datasets: [{ label: 'จำนวน', data: dbpH.counts, backgroundColor: dbpC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} } }
+  });
+
+  destroyChart('chartHTCtrl');
+  const htC = countBy(d.filter(r=>r.HTCONTROL!=null), 'HTCONTROL');
+  chartInstances['chartHTCtrl'] = new Chart(document.getElementById('chartHTCtrl'), {
+    type: 'doughnut',
+    data: { labels: [0,1,2,3].map(i=>CTRL_LABELS[i]), datasets: [{ data: [htC[0]||0, htC[1]||0, htC[2]||0, htC[3]||0], backgroundColor: CTRL_COLORS }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font:{weight:'bold',size:12}, formatter:(v,ctx)=>{ const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return v>0?Math.round(v/t*100)+'%':''; } } } }
+  });
+
+  // BP Scatter
+  destroyChart('chartBPScatter');
+  const bpData = d.filter(r=>r.SBP!=null&&r.DBP!=null);
+  const goalPts = bpData.filter(r=>r.SBP<130&&r.DBP<80);
+  const notGoalPts = bpData.filter(r=>r.SBP>=130||r.DBP>=80);
+  chartInstances['chartBPScatter'] = new Chart(document.getElementById('chartBPScatter'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'บรรลุเป้าหมาย', data: goalPts.map(r=>({x:r.SBP,y:r.DBP})), backgroundColor: COLORS.greenA, pointRadius: 4 },
+        { label: 'ไม่บรรลุเป้าหมาย', data: notGoalPts.map(r=>({x:r.SBP,y:r.DBP})), backgroundColor: COLORS.redA, pointRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x:{title:{display:true,text:'SBP (mmHg)'}}, y:{title:{display:true,text:'DBP (mmHg)'}} },
+      plugins: {
+        datalabels: { display: false },
+        annotation: { annotations: {
+          sbpLine: { type:'line', xMin:130, xMax:130, borderColor:'rgba(239,68,68,.5)', borderWidth:2, borderDash:[5,5] },
+          dbpLine: { type:'line', yMin:80, yMax:80, borderColor:'rgba(239,68,68,.5)', borderWidth:2, borderDash:[5,5] }
+        }}
+      }
+    }
+  });
+}
+
+// ==================== PHARMACY ====================
+function renderPharmacy() {
+  const d = filteredData;
+  const withMed = d.filter(r=>r.ALLMED_COUNT!=null);
+  const poly = withMed.filter(r=>r.ALLMED_COUNT>5).length;
+  const remission = d.filter(r=>r.DMMED_COUNT===0).length;
+  const dmMedTotal = d.filter(r=>r.DMMED_COUNT!=null).length;
+
+  renderKPIs('kpiPharmacy', [
+    { value: pct(poly, withMed.length)+'%', label: 'อัตรา Polypharmacy', sub: `${poly}/${withMed.length} (ยา>5 รายการ)`, cls: 'warning' },
+    { value: pct(remission, dmMedTotal)+'%', label: 'อัตรา DM Remission', sub: `${remission}/${dmMedTotal} (ยา DM=0)`, cls: 'purple' },
+    { value: avg(withMed.map(r=>r.ALLMED_COUNT)).toFixed(1), label: 'จำนวนยาเฉลี่ย', cls: 'teal' },
+    { value: avg(d.filter(r=>r.DMMED_COUNT!=null).map(r=>r.DMMED_COUNT)).toFixed(1), label: 'ยา DM เฉลี่ย', cls: '' },
+  ]);
+
+  destroyChart('chartPoly');
+  chartInstances['chartPoly'] = new Chart(document.getElementById('chartPoly'), {
+    type: 'doughnut',
+    data: { labels: ['Polypharmacy (>5 รายการ)', 'ปกติ (<=5 รายการ)'], datasets: [{ data: [poly, withMed.length-poly], backgroundColor: [COLORS.orangeA, COLORS.greenA] }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font:{weight:'bold',size:14}, formatter:(v,ctx)=>{ const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return Math.round(v/t*100)+'%'; } } } }
+  });
+
+  destroyChart('chartRemission');
+  chartInstances['chartRemission'] = new Chart(document.getElementById('chartRemission'), {
+    type: 'doughnut',
+    data: { labels: ['DM Remission (ยา DM=0)', 'ปกติ (ยา DM>0)'], datasets: [{ data: [remission, dmMedTotal-remission], backgroundColor: [COLORS.purpleA, COLORS.blueA] }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font:{weight:'bold',size:14}, formatter:(v,ctx)=>{ const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return Math.round(v/t*100)+'%'; } } } }
+  });
+
+  destroyChart('chartMedType');
+  chartInstances['chartMedType'] = new Chart(document.getElementById('chartMedType'), {
+    type: 'bar',
+    data: {
+      labels: ['ยา HT', 'ยา DLP', 'ยา DM'],
+      datasets: [{
+        label: 'จำนวนเฉลี่ย',
+        data: [
+          avg(d.filter(r=>r.HTMED_COUNT!=null).map(r=>r.HTMED_COUNT)),
+          avg(d.filter(r=>r.DLPMED_COUNT!=null).map(r=>r.DLPMED_COUNT)),
+          avg(d.filter(r=>r.DMMED_COUNT!=null).map(r=>r.DMMED_COUNT))
+        ].map(v=>+v.toFixed(2)),
+        backgroundColor: [COLORS.purpleA, COLORS.orangeA, COLORS.blueA]
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, anchor: 'end', align: 'top', font:{size:12,weight:'bold'} } }, scales: { y:{title:{display:true,text:'จำนวนยาเฉลี่ย'}} } }
+  });
+
+  destroyChart('chartMedDist');
+  const medH = makeHistogram(withMed.map(r=>r.ALLMED_COUNT), [0,1,2,3,4,5,6,7,8,9,10,15]);
+  const medC = medH.labels.map((_,i) => [1,2,3,4,5,6,7,8,9,10,15][i] <= 5 ? COLORS.greenA : COLORS.orangeA);
+  chartInstances['chartMedDist'] = new Chart(document.getElementById('chartMedDist'), {
+    type: 'bar',
+    data: { labels: medH.labels, datasets: [{ label: 'จำนวน', data: medH.counts, backgroundColor: medC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'top', font:{size:11}} } }
+  });
+}
+
+// ==================== DRPs ====================
+function renderDRPs() {
+  const d = filteredData;
+  const withDRP = d.filter(r=>r.DRPS_COUNT!=null&&r.DRPS_COUNT>0).length;
+  const totalDRPs = d.filter(r=>r.DRPS_COUNT!=null).reduce((a,r)=>a+r.DRPS_COUNT,0);
+  const hypo = d.filter(r=>r.HYPOGLYCEMIA===1).length;
+  const hyper = d.filter(r=>r.HYPERGLYCEMIA===1).length;
+
+  renderKPIs('kpiDRPS', [
+    { value: withDRP, label: 'การเยี่ยมที่พบ DRP', sub: `จาก ${d.length} การเยี่ยม`, cls: 'danger' },
+    { value: totalDRPs, label: 'จำนวน DRP ทั้งหมด', cls: 'warning' },
+    { value: hypo, label: 'เหตุการณ์ Hypoglycemia', cls: 'purple' },
+    { value: hyper, label: 'เหตุการณ์ Hyperglycemia', cls: 'danger' },
+  ]);
+
+  // DRP Types
+  destroyChart('chartDRPType');
+  const drpTypes = {};
+  d.forEach(r => {
+    if(!r.DRPS_TYPE || r.DRPS_TYPE === 'Without DRP') return;
+    r.DRPS_TYPE.split(',').forEach(t => {
+      t = t.trim();
+      if(t) drpTypes[t] = (drpTypes[t]||0) + 1;
+    });
+  });
+  const dtLabels = Object.keys(drpTypes).sort((a,b)=>drpTypes[b]-drpTypes[a]);
+  const dtColors = [COLORS.red, COLORS.orange, COLORS.yellow, COLORS.purple, COLORS.blue, COLORS.teal, COLORS.pink, COLORS.indigo];
+  chartInstances['chartDRPType'] = new Chart(document.getElementById('chartDRPType'), {
+    type: 'bar',
+    data: { labels: dtLabels, datasets: [{ label: 'จำนวน', data: dtLabels.map(l=>drpTypes[l]), backgroundColor: dtColors.slice(0, dtLabels.length).map(c=>c+'cc') }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend:{display:false}, datalabels:{display:true, anchor:'end', align:'right', font:{size:11}} } }
+  });
+
+  // Other DRPs
+  destroyChart('chartOtherDRP');
+  const otherTypes = {};
+  d.forEach(r => {
+    if(!r.OTHERDRPS) return;
+    r.OTHERDRPS.split(',').forEach(t => {
+      t = t.trim();
+      if(t) otherTypes[t] = (otherTypes[t]||0) + 1;
+    });
+  });
+  const otLabels = Object.keys(otherTypes).sort((a,b)=>otherTypes[b]-otherTypes[a]);
+  chartInstances['chartOtherDRP'] = new Chart(document.getElementById('chartOtherDRP'), {
+    type: 'bar',
+    data: { labels: otLabels, datasets: [{ label: 'จำนวน', data: otLabels.map(l=>otherTypes[l]), backgroundColor: dtColors.slice(0, otLabels.length).map(c=>c+'cc') }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend:{display:false}, datalabels:{display:true, anchor:'end', align:'right', font:{size:11}} } }
+  });
+
+  // DRP count distribution
+  destroyChart('chartDRPCount');
+  const drpCounts = countBy(d.filter(r=>r.DRPS_COUNT!=null), 'DRPS_COUNT');
+  const drpLabels = Object.keys(drpCounts).sort((a,b)=>a-b);
+  chartInstances['chartDRPCount'] = new Chart(document.getElementById('chartDRPCount'), {
+    type: 'bar',
+    data: { labels: drpLabels.map(l=>l+' DRP'), datasets: [{ label: 'การเยี่ยม', data: drpLabels.map(l=>drpCounts[l]), backgroundColor: drpLabels.map(l=>l==='0'?COLORS.greenA:COLORS.redA) }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false}, datalabels:{display:true, anchor:'end', align:'top', font:{size:12,weight:'bold'}} } }
+  });
+
+  // Glycemia
+  destroyChart('chartGlycemia');
+  chartInstances['chartGlycemia'] = new Chart(document.getElementById('chartGlycemia'), {
+    type: 'bar',
+    data: {
+      labels: ['Hypoglycemia', 'Hyperglycemia'],
+      datasets: [
+        { label: 'เกิดเหตุการณ์', data: [hypo, hyper], backgroundColor: [COLORS.purpleA, COLORS.redA] },
+        { label: 'ไม่เกิดเหตุการณ์', data: [d.filter(r=>r.HYPOGLYCEMIA===0).length, d.filter(r=>r.HYPERGLYCEMIA===0).length], backgroundColor: [COLORS.greenA, COLORS.greenA] }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x:{stacked:true}, y:{stacked:true} }, plugins: { datalabels:{display:false} } }
+  });
+}
+
+// ==================== DEMOGRAPHICS ====================
+function renderDemographics() {
+  const d = filteredData;
+  const pts = getFirstVisits(d);
+  const male = pts.filter(r=>r.SEX===1).length;
+  const female = pts.filter(r=>r.SEX===0).length;
+
+  renderKPIs('kpiDemo', [
+    { value: pts.length, label: 'ผู้ป่วยทั้งหมด', cls: '' },
+    { value: male, label: 'ชาย', sub: pct(male,pts.length)+'%', cls: '' },
+    { value: female, label: 'หญิง', sub: pct(female,pts.length)+'%', cls: 'purple' },
+    { value: avg(pts.map(r=>r.AGE)).toFixed(0), label: 'อายุเฉลี่ย', cls: 'teal' },
+    { value: (d.length / pts.length).toFixed(1), label: 'เยี่ยมเฉลี่ย/ผู้ป่วย', cls: 'warning' },
+  ]);
+
+  destroyChart('chartSex');
+  chartInstances['chartSex'] = new Chart(document.getElementById('chartSex'), {
+    type: 'doughnut',
+    data: { labels: ['ชาย','หญิง'], datasets: [{ data: [male,female], backgroundColor: [COLORS.blueA, COLORS.pinkA || '#ec489980'] }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font:{weight:'bold',size:14}, formatter:(v,ctx)=>{ const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return v+' ('+Math.round(v/t*100)+'%)'; } } } }
+  });
+
+  destroyChart('chartAge');
+  const ageH = makeHistogram(pts.map(r=>r.AGE).filter(Boolean), [30,40,50,55,60,65,70,80]);
+  chartInstances['chartAge'] = new Chart(document.getElementById('chartAge'), {
+    type: 'bar',
+    data: { labels: ageH.labels, datasets: [{ label: 'ผู้ป่วย', data: ageH.counts, backgroundColor: COLORS.blueA }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:true, anchor:'end', align:'top', font:{size:11}} }, scales: { y:{title:{display:true,text:'ผู้ป่วย'}}, x:{title:{display:true,text:'อายุ'}} } }
+  });
+
+  destroyChart('chartScheme');
+  const schemes = countBy(pts, 'SCHEME');
+  const sLabels = Object.keys(schemes).sort((a,b)=>schemes[b]-schemes[a]);
+  const sColors = [COLORS.blue, COLORS.green, COLORS.orange, COLORS.purple, COLORS.teal, COLORS.pink];
+  chartInstances['chartScheme'] = new Chart(document.getElementById('chartScheme'), {
+    type: 'pie',
+    data: { labels: sLabels, datasets: [{ data: sLabels.map(l=>schemes[l]), backgroundColor: sColors.slice(0,sLabels.length).map(c=>c+'cc') }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: true, color: '#fff', font:{weight:'bold',size:11}, formatter:(v,ctx)=>{ return ctx.chart.data.labels[ctx.dataIndex]+': '+v; } } } }
+  });
+
+  destroyChart('chartBMI');
+  const bmiVals = d.map(r=>r.BMI).filter(Boolean);
+  const bmiH = makeHistogram(bmiVals, [15,18.5,23,25,30,35,50]);
+  const bmiC = ['#22c55e80','#22c55e80','#eab30880','#f9731680','#ef444480','#dc262680'];
+  chartInstances['chartBMI'] = new Chart(document.getElementById('chartBMI'), {
+    type: 'bar',
+    data: { labels: ['น้ำหนักต่ำ','ปกติ','น้ำหนักเกิน','อ้วนระดับ 1','อ้วนระดับ 2','อ้วนระดับ 3'], datasets: [{ label: 'จำนวน', data: bmiH.counts, backgroundColor: bmiC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:true, anchor:'end', align:'top', font:{size:11}} } }
+  });
+
+  destroyChart('chartEGFR');
+  const egfrVals = d.map(r=>r.EGFR).filter(Boolean);
+  const egfrH = makeHistogram(egfrVals, [0,30,60,90,120,200]);
+  const egfrC = ['#ef444480','#f9731680','#eab30880','#22c55e80','#22c55e80'];
+  chartInstances['chartEGFR'] = new Chart(document.getElementById('chartEGFR'), {
+    type: 'bar',
+    data: { labels: ['<30 (รุนแรง)','30-60','60-90','90-120','>120'], datasets: [{ label: 'จำนวน', data: egfrH.counts, backgroundColor: egfrC }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:true, anchor:'end', align:'top', font:{size:11}} } }
+  });
+
+  destroyChart('chartVisitsPerPt');
+  const visitCounts = {};
+  d.forEach(r => { visitCounts[r.NO] = (visitCounts[r.NO]||0) + 1; });
+  const vcDist = countBy(Object.values(visitCounts).map(v=>({v})), 'v');
+  const vcLabels = Object.keys(vcDist).sort((a,b)=>a-b);
+  chartInstances['chartVisitsPerPt'] = new Chart(document.getElementById('chartVisitsPerPt'), {
+    type: 'bar',
+    data: { labels: vcLabels.map(l=>l+' ครั้ง'), datasets: [{ label: 'ผู้ป่วย', data: vcLabels.map(l=>vcDist[l]), backgroundColor: COLORS.tealA }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:true, anchor:'end', align:'top', font:{size:11}} } }
+  });
+}
+
+// ==================== PATIENT LOOKUP ====================
+function searchPatient() {
+  const q = document.getElementById('patientSearch').value.trim();
+  if (!q) return;
+  const container = document.getElementById('patientResult');
+
+  let ptData;
+  if (/^\d+$/.test(q) && parseInt(q) <= 200) {
+    ptData = RAW_DATA.filter(r => r.NO == parseInt(q));
+  }
+  if (!ptData || ptData.length === 0) {
+    ptData = RAW_DATA.filter(r => String(r.HN) === q);
+  }
+  if (ptData.length === 0) {
+    container.innerHTML = '<div class="chart-card"><h3>ไม่พบผู้ป่วย</h3><p>ลองใส่หมายเลขผู้ป่วยหรือเลข HN อื่น</p></div>';
+    return;
+  }
+
+  ptData.sort((a,b) => (a.VISIT_DATE||'').localeCompare(b.VISIT_DATE||''));
+  const first = ptData[0];
+  const last = ptData[ptData.length - 1];
+
+  let html = `
+  <div class="patient-info">
+    <div class="info-card"><h4>หมายเลขผู้ป่วย</h4><div class="val">${first.NO}</div></div>
+    <div class="info-card"><h4>HN</h4><div class="val">${first.HN}</div></div>
+    <div class="info-card"><h4>เพศ</h4><div class="val">${first.SEX===1?'ชาย':'หญิง'}</div></div>
+    <div class="info-card"><h4>อายุ</h4><div class="val">${first.AGE}</div></div>
+    <div class="info-card"><h4>สิทธิ์</h4><div class="val">${first.SCHEME}</div></div>
+    <div class="info-card"><h4>จำนวนการเยี่ยม</h4><div class="val">${ptData.length}</div></div>
+    <div class="info-card"><h4>สถานะยา</h4><div class="val">${last.ALLMED_COUNT>5?'<span class="badge badge-warning">Polypharmacy</span>':'<span class="badge badge-success">Normal</span>'}</div></div>
+    <div class="info-card"><h4>DM Remission</h4><div class="val">${last.DMMED_COUNT===0?'<span class="badge badge-purple">DM Remission</span>':'<span class="badge badge-primary">Normal</span>'}</div></div>
+  </div>
+  `;
+
+  // Visit history table
+  html += `<div class="table-card"><h3>ประวัติการเยี่ยม</h3><div style="overflow-x:auto;"><table><thead><tr>
+    <th>ครั้ง</th><th>วันที่</th><th>A1C</th><th>FBS</th><th>LDL</th><th>TG</th><th>SBP</th><th>DBP</th>
+    <th>SCR</th><th>eGFR</th><th>BMI</th><th>ยาทั้งหมด</th><th>ยา DM</th>
+    <th>ปรับยา DM</th><th>ปรับยา DLP</th><th>ปรับยา HT</th><th>DRPs</th><th>ประเภท DRP</th>
+    <th>Hypo</th><th>Hyper</th></tr></thead><tbody>`;
+
+  ptData.forEach(r => {
+    const a1cCls = r.A1C!=null ? (r.A1C<6.5?'badge-success':'badge-danger') : '';
+    const fbsCls = r.FBS!=null ? (r.FBS<120?'badge-success':'badge-danger') : '';
+    const ldlCls = r.LDL!=null ? (r.LDL<90?'badge-success':'badge-danger') : '';
+    const tgCls = r.TG!=null ? (r.TG<150?'badge-success':'badge-danger') : '';
+    const sbpCls = r.SBP!=null ? (r.SBP<130?'badge-success':'badge-danger') : '';
+    const dbpCls = r.DBP!=null ? (r.DBP<80?'badge-success':'badge-danger') : '';
+
+    html += `<tr>
+      <td>${r.VISIT}</td><td>${r.VISIT_DATE||'-'}</td>
+      <td>${r.A1C!=null?'<span class="badge '+a1cCls+'">'+r.A1C+'</span>':'-'}</td>
+      <td>${r.FBS!=null?'<span class="badge '+fbsCls+'">'+r.FBS+'</span>':'-'}</td>
+      <td>${r.LDL!=null?'<span class="badge '+ldlCls+'">'+r.LDL+'</span>':'-'}</td>
+      <td>${r.TG!=null?'<span class="badge '+tgCls+'">'+r.TG+'</span>':'-'}</td>
+      <td>${r.SBP!=null?'<span class="badge '+sbpCls+'">'+r.SBP+'</span>':'-'}</td>
+      <td>${r.DBP!=null?'<span class="badge '+dbpCls+'">'+r.DBP+'</span>':'-'}</td>
+      <td>${r.SCR!=null?r.SCR:'-'}</td>
+      <td>${r.EGFR!=null?r.EGFR:'-'}</td>
+      <td>${r.BMI!=null?r.BMI:'-'}</td>
+      <td>${r.ALLMED_COUNT!=null?'<span class="badge '+(r.ALLMED_COUNT>5?'badge-warning':'badge-success')+'">'+r.ALLMED_COUNT+'</span>':'-'}</td>
+      <td>${r.DMMED_COUNT!=null?(r.DMMED_COUNT===0?'<span class="badge badge-purple">0</span>':r.DMMED_COUNT):'-'}</td>
+      <td>${r.DMCONTROL!=null?CTRL_LABELS[r.DMCONTROL]:'-'}</td>
+      <td>${r.DLPCONTROL!=null?CTRL_LABELS[r.DLPCONTROL]:'-'}</td>
+      <td>${r.HTCONTROL!=null?CTRL_LABELS[r.HTCONTROL]:'-'}</td>
+      <td>${r.DRPS_COUNT!=null?r.DRPS_COUNT:'-'}</td>
+      <td>${r.DRPS_TYPE||'-'}</td>
+      <td>${r.HYPOGLYCEMIA?'<span class="badge badge-danger">Yes</span>':'-'}</td>
+      <td>${r.HYPERGLYCEMIA?'<span class="badge badge-danger">Yes</span>':'-'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div></div>';
+
+  // Trend charts
+  html += `<div class="chart-grid">
+    <div class="chart-card"><h3>แนวโน้มค่า Lab</h3><div class="chart-wrap"><canvas id="chartPtLab"></canvas></div></div>
+    <div class="chart-card"><h3>แนวโน้มความดันโลหิต</h3><div class="chart-wrap"><canvas id="chartPtBP"></canvas></div></div>
+  </div>`;
+
+  container.innerHTML = html;
+
+  // Lab trend chart
+  destroyChart('chartPtLab');
+  const visitLabels = ptData.map(r => r.VISIT_DATE || 'V'+r.VISIT);
+  chartInstances['chartPtLab'] = new Chart(document.getElementById('chartPtLab'), {
+    type: 'line',
+    data: {
+      labels: visitLabels,
+      datasets: [
+        { label: 'A1C', data: ptData.map(r=>r.A1C), borderColor: COLORS.blue, tension:.3, spanGaps: true },
+        { label: 'FBS/10', data: ptData.map(r=>r.FBS!=null?r.FBS/10:null), borderColor: COLORS.orange, tension:.3, spanGaps: true },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:false} } }
+  });
+
+  destroyChart('chartPtBP');
+  chartInstances['chartPtBP'] = new Chart(document.getElementById('chartPtBP'), {
+    type: 'line',
+    data: {
+      labels: visitLabels,
+      datasets: [
+        { label: 'SBP', data: ptData.map(r=>r.SBP), borderColor: COLORS.red, tension:.3, spanGaps: true },
+        { label: 'DBP', data: ptData.map(r=>r.DBP), borderColor: COLORS.blue, tension:.3, spanGaps: true },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:false} } }
+  });
+}
+</script>
+</body>
+</html>
