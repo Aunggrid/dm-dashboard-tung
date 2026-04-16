@@ -11,9 +11,10 @@ Diabetes clinic patient visit dashboard for analyzing DM remission study data. B
 ## Project Structure
 ```
 D:\AI_tung2\
-  dashboard.html          # Main dashboard (self-contained with embedded JSON data)
+  index.html              # Main dashboard (self-contained with embedded JSON data)
   DM_remiss_analyz(1).xlsx # Source Excel data
   request.txt             # Original requirements
+  CLAUDE.md               # Project documentation
   libs/
     chart.min.js          # Chart.js v4.4.7 (offline)
     chartjs-datalabels.min.js  # Chart.js datalabels plugin v2.2.0
@@ -29,7 +30,8 @@ D:\AI_tung2\
 5. **เภสัชกรรม (Pharmacy)** - Polypharmacy, DM remission, med counts
 6. **DRPs** - Drug-related problems, hypoglycemia/hyperglycemia
 7. **ข้อมูลประชากร (Demographics)** - Sex, age, scheme, BMI, eGFR
-8. **ค้นหาผู้ป่วย (Patient Lookup)** - Search by NO/HN, visit history & trends
+8. **ครั้งที่เยี่ยมถึงเป้าหมาย (Visits to Goal)** - How many visits before achieving each clinical goal; stacked bar, achievement rate, avg visits, trend lines, per-patient detail table
+9. **ค้นหาผู้ป่วย (Patient Lookup)** - Search by NO/HN, visit history & trends
 
 ## Clinical Thresholds
 | Metric | Goal | Related Control Column |
@@ -57,15 +59,20 @@ D:\AI_tung2\
 - UI is in **Thai** (font: Sarabun)
 - Medical/professional terms kept in **English** (A1C, FBS, DRP, Polypharmacy, etc.)
 
+## Hosting
+- **GitHub repo**: https://github.com/Aunggrid/dm-dashboard-tung (public)
+- **Live site**: https://aunggrid.github.io/dm-dashboard-tung/
+- Deployed via GitHub Pages (legacy mode, serves from `master` branch root)
+
 ## Tech Stack
 - Pure HTML/CSS/JS (no build tools)
 - Chart.js + datalabels plugin
 - Data embedded as JSON in HTML
-- Fully offline-capable
+- Fully offline-capable (also hosted on GitHub Pages)
 
 ## How to Rebuild Data
 If the Excel changes, re-extract data using Python (openpyxl):
 1. Read `CollectVer` sheet with `data_only=True`
 2. Parse Thai Buddhist dates from PREDATE column (year - 543)
 3. Compute: VISIT (count per patient), SEX (from column H), BMI (BW*10000/HT^2)
-4. Export to JSON and embed in `dashboard.html` replacing `RAW_DATA`
+4. Export to JSON and embed in `index.html` replacing `RAW_DATA`
