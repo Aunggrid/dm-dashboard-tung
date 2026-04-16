@@ -347,6 +347,7 @@ tbody tr:hover { background: var(--gray-50); }
     <button data-tab="pharmacy">เภสัชกรรม</button>
     <button data-tab="drps">DRPs</button>
     <button data-tab="demographics">ข้อมูลประชากร</button>
+    <button data-tab="visits2goal">ครั้งที่เยี่ยมถึงเป้าหมาย</button>
     <button data-tab="patient">ค้นหาผู้ป่วย</button>
   </div>
 </div>
@@ -476,6 +477,21 @@ tbody tr:hover { background: var(--gray-50); }
       <div class="chart-card"><h3>การกระจาย BMI</h3><div class="chart-wrap"><canvas id="chartBMI"></canvas></div></div>
       <div class="chart-card"><h3>การทำงานของไต (eGFR)</h3><div class="chart-wrap"><canvas id="chartEGFR"></canvas></div></div>
       <div class="chart-card"><h3>จำนวนครั้งที่เยี่ยมต่อผู้ป่วย</h3><div class="chart-wrap"><canvas id="chartVisitsPerPt"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: Visits to Goal -->
+  <div class="tab-content" id="tab-visits2goal">
+    <div class="kpi-grid" id="kpiV2G"></div>
+    <div class="chart-grid">
+      <div class="chart-card full-width"><h3>จำนวนครั้งที่เยี่ยมก่อนบรรลุเป้าหมาย (แยกตามตัวชี้วัด)</h3><div class="chart-wrap"><canvas id="chartV2GAll"></canvas></div></div>
+      <div class="chart-card"><h3>สัดส่วนผู้ป่วย: บรรลุเป้าหมาย vs ไม่บรรลุ</h3><div class="chart-wrap"><canvas id="chartV2GRate"></canvas></div></div>
+      <div class="chart-card"><h3>จำนวนครั้งเฉลี่ยก่อนบรรลุเป้าหมาย</h3><div class="chart-wrap"><canvas id="chartV2GAvg"></canvas></div></div>
+      <div class="chart-card full-width"><h3>รายละเอียดจำนวนครั้งที่เยี่ยมก่อนบรรลุเป้าหมาย (แต่ละตัวชี้วัด)</h3><div class="chart-wrap"><canvas id="chartV2GDist"></canvas></div></div>
+    </div>
+    <div class="table-card">
+      <h3>สรุปรายผู้ป่วย: ครั้งที่เยี่ยมก่อนบรรลุเป้าหมาย</h3>
+      <div id="tableV2G"></div>
     </div>
   </div>
 
@@ -616,7 +632,7 @@ function renderCurrentTab() {
   const active = document.querySelector('#navTabs button.active').dataset.tab;
   const renderers = {
     overview: renderOverview, dm: renderDM, dlp: renderDLP, ht: renderHT,
-    pharmacy: renderPharmacy, drps: renderDRPs, demographics: renderDemographics, patient: ()=>{}
+    pharmacy: renderPharmacy, drps: renderDRPs, demographics: renderDemographics, visits2goal: renderVisits2Goal, patient: ()=>{}
   };
   if (renderers[active]) renderers[active]();
 }
@@ -1161,6 +1177,201 @@ function renderDemographics() {
     data: { labels: vcLabels.map(l=>l+' ครั้ง'), datasets: [{ label: 'ผู้ป่วย', data: vcLabels.map(l=>vcDist[l]), backgroundColor: COLORS.tealA }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels:{display:true, anchor:'end', align:'top', font:{size:11}} } }
   });
+}
+
+// ==================== VISITS TO GOAL ====================
+function computeVisitsToGoal(data, col, threshold) {
+  // Group by patient
+  const patients = {};
+  data.forEach(r => {
+    if (!patients[r.NO]) patients[r.NO] = [];
+    patients[r.NO].push(r);
+  });
+
+  const result = { visitsToGoal: [], alreadyAtGoal: 0, achievedLater: 0, neverAchieved: 0, noData: 0, perPatient: {} };
+
+  Object.entries(patients).forEach(([no, visits]) => {
+    visits.sort((a, b) => (a.VISIT_DATE || '').localeCompare(b.VISIT_DATE || '') || a.VISIT - b.VISIT);
+    const withData = visits.filter(v => v[col] != null);
+    if (!withData.length) { result.noData++; return; }
+
+    const first = withData[0];
+    const firstIdx = visits.indexOf(first);
+
+    if (first[col] < threshold) {
+      result.alreadyAtGoal++;
+      result.visitsToGoal.push(1);
+      result.perPatient[no] = { visits: 1, status: 'atGoal1st' };
+      return;
+    }
+
+    let found = false;
+    for (let j = firstIdx + 1; j < visits.length; j++) {
+      if (visits[j][col] != null && visits[j][col] < threshold) {
+        const vNum = j - firstIdx + 1;
+        result.achievedLater++;
+        result.visitsToGoal.push(vNum);
+        result.perPatient[no] = { visits: vNum, status: 'achieved' };
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      result.neverAchieved++;
+      result.perPatient[no] = { visits: null, status: 'never' };
+    }
+  });
+
+  return result;
+}
+
+function renderVisits2Goal() {
+  const d = filteredData;
+  const goals = [
+    { name: 'A1C', col: 'A1C', threshold: 6.5, label: 'A1C < 6.5' },
+    { name: 'FBS', col: 'FBS', threshold: 120, label: 'FBS < 120' },
+    { name: 'LDL', col: 'LDL', threshold: 90, label: 'LDL < 90' },
+    { name: 'TG', col: 'TG', threshold: 150, label: 'TG < 150' },
+    { name: 'SBP', col: 'SBP', threshold: 130, label: 'SBP < 130' },
+    { name: 'DBP', col: 'DBP', threshold: 80, label: 'DBP < 80' },
+  ];
+
+  const results = goals.map(g => ({ ...g, ...computeVisitsToGoal(d, g.col, g.threshold) }));
+
+  // KPIs - summary of best/worst
+  const bestGoal = results.reduce((best, r) => {
+    const rate = r.visitsToGoal.length / (r.visitsToGoal.length + r.neverAchieved);
+    const bestRate = best.visitsToGoal.length / (best.visitsToGoal.length + best.neverAchieved);
+    return rate > bestRate ? r : best;
+  });
+  const hardestGoal = results.reduce((worst, r) => {
+    const rate = r.visitsToGoal.length / (r.visitsToGoal.length + r.neverAchieved);
+    const worstRate = worst.visitsToGoal.length / (worst.visitsToGoal.length + worst.neverAchieved);
+    return rate < worstRate ? r : worst;
+  });
+
+  const totalPatients = uniquePatients(d);
+  const allGoalAvg = results.reduce((s, r) => s + (r.visitsToGoal.length ? r.visitsToGoal.reduce((a,b)=>a+b,0)/r.visitsToGoal.length : 0), 0) / results.length;
+
+  renderKPIs('kpiV2G', [
+    { value: totalPatients, label: 'ผู้ป่วยทั้งหมด', cls: '' },
+    { value: allGoalAvg.toFixed(1), label: 'ครั้งเฉลี่ยรวมทุกเป้า', sub: 'เฉพาะผู้ที่บรรลุ', cls: 'teal' },
+    { value: bestGoal.label, label: 'เป้าหมายที่บรรลุง่ายที่สุด', sub: `${pct(bestGoal.visitsToGoal.length, bestGoal.visitsToGoal.length+bestGoal.neverAchieved)}% บรรลุ`, cls: 'success' },
+    { value: hardestGoal.label, label: 'เป้าหมายที่บรรลุยากที่สุด', sub: `${pct(hardestGoal.visitsToGoal.length, hardestGoal.visitsToGoal.length+hardestGoal.neverAchieved)}% บรรลุ`, cls: 'danger' },
+  ]);
+
+  // Chart 1: Grouped bar - visits to goal by metric (1st, 2nd, 3rd, 4th, 5th+ visit, never)
+  destroyChart('chartV2GAll');
+  const maxVisit = 6;
+  const bucketLabels = ['ครั้งที่ 1', 'ครั้งที่ 2', 'ครั้งที่ 3', 'ครั้งที่ 4', 'ครั้งที่ 5+', 'ไม่บรรลุ'];
+  const bucketColors = [COLORS.green, '#4ade80', '#86efac', COLORS.yellow, COLORS.orange, COLORS.red];
+
+  const datasets = bucketLabels.map((lbl, bi) => ({
+    label: lbl,
+    data: results.map(r => {
+      if (bi < 5) {
+        if (bi < 4) return r.visitsToGoal.filter(v => v === bi + 1).length;
+        return r.visitsToGoal.filter(v => v >= 5).length;
+      }
+      return r.neverAchieved;
+    }),
+    backgroundColor: bucketColors[bi] + 'cc',
+  }));
+
+  chartInstances['chartV2GAll'] = new Chart(document.getElementById('chartV2GAll'), {
+    type: 'bar',
+    data: { labels: results.map(r => r.label), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'จำนวนผู้ป่วย' } } },
+      plugins: { datalabels: { display: ctx => ctx.dataset.data[ctx.dataIndex] > 0, color: '#fff', font: { weight: 'bold', size: 10 } } }
+    }
+  });
+
+  // Chart 2: Achievement rate
+  destroyChart('chartV2GRate');
+  chartInstances['chartV2GRate'] = new Chart(document.getElementById('chartV2GRate'), {
+    type: 'bar',
+    data: {
+      labels: results.map(r => r.label),
+      datasets: [
+        { label: 'บรรลุเป้าหมาย', data: results.map(r => r.visitsToGoal.length), backgroundColor: COLORS.green + 'cc' },
+        { label: 'ไม่บรรลุเป้าหมาย', data: results.map(r => r.neverAchieved), backgroundColor: COLORS.red + 'cc' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'จำนวนผู้ป่วย' } } },
+      plugins: { datalabels: { display: ctx => ctx.dataset.data[ctx.dataIndex] > 0, color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (v, ctx) => { const total = ctx.chart.data.datasets.reduce((s, ds) => s + ds.data[ctx.dataIndex], 0); return Math.round(v/total*100) + '%'; } } }
+    }
+  });
+
+  // Chart 3: Average visits to goal
+  destroyChart('chartV2GAvg');
+  const avgData = results.map(r => r.visitsToGoal.length ? +(r.visitsToGoal.reduce((a,b)=>a+b,0)/r.visitsToGoal.length).toFixed(1) : 0);
+  chartInstances['chartV2GAvg'] = new Chart(document.getElementById('chartV2GAvg'), {
+    type: 'bar',
+    data: {
+      labels: results.map(r => r.label),
+      datasets: [{ label: 'ครั้งเฉลี่ย', data: avgData, backgroundColor: results.map((_, i) => [COLORS.blue, COLORS.orange, COLORS.purple, COLORS.teal, COLORS.red, COLORS.indigo][i] + 'cc') }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { title: { display: true, text: 'จำนวนครั้งเฉลี่ย' }, beginAtZero: true } },
+      plugins: { datalabels: { display: true, anchor: 'end', align: 'top', font: { size: 13, weight: 'bold' }, formatter: v => v + ' ครั้ง' } }
+    }
+  });
+
+  // Chart 4: Distribution per metric
+  destroyChart('chartV2GDist');
+  const distColors = [COLORS.blue, COLORS.orange, COLORS.purple, COLORS.teal, COLORS.red, COLORS.indigo];
+  const distDatasets = results.map((r, ri) => {
+    const maxV = Math.max(...r.visitsToGoal, 0);
+    const counts = [];
+    for (let v = 1; v <= Math.max(maxV, 6); v++) {
+      counts.push(r.visitsToGoal.filter(x => x === v).length);
+    }
+    return { label: r.label, data: counts, borderColor: distColors[ri], backgroundColor: distColors[ri] + '33', tension: 0.3, fill: false, pointRadius: 4 };
+  });
+  const maxLen = Math.max(...distDatasets.map(ds => ds.data.length));
+  const distLabels = Array.from({ length: maxLen }, (_, i) => 'ครั้งที่ ' + (i + 1));
+
+  chartInstances['chartV2GDist'] = new Chart(document.getElementById('chartV2GDist'), {
+    type: 'line',
+    data: { labels: distLabels, datasets: distDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { title: { display: true, text: 'จำนวนผู้ป่วย' }, beginAtZero: true } },
+      plugins: { datalabels: { display: false } }
+    }
+  });
+
+  // Table: per-patient detail
+  const patients = {};
+  d.forEach(r => { if (!patients[r.NO]) patients[r.NO] = r; });
+  let html = '<table><thead><tr><th>NO</th><th>HN</th><th>เพศ</th><th>อายุ</th>';
+  goals.forEach(g => html += `<th>${g.label}</th>`);
+  html += '</tr></thead><tbody>';
+
+  Object.keys(patients).sort((a,b) => a-b).forEach(no => {
+    const pt = patients[no];
+    html += `<tr><td>${no}</td><td>${pt.HN}</td><td>${pt.SEX===1?'ชาย':'หญิง'}</td><td>${pt.AGE}</td>`;
+    results.forEach(r => {
+      const info = r.perPatient[no];
+      if (!info) {
+        html += '<td>-</td>';
+      } else if (info.status === 'atGoal1st') {
+        html += '<td><span class="badge badge-success">ครั้งที่ 1</span></td>';
+      } else if (info.status === 'achieved') {
+        html += `<td><span class="badge badge-primary">ครั้งที่ ${info.visits}</span></td>`;
+      } else {
+        html += '<td><span class="badge badge-danger">ไม่บรรลุ</span></td>';
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('tableV2G').innerHTML = html;
 }
 
 // ==================== PATIENT LOOKUP ====================
