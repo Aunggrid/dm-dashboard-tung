@@ -6,7 +6,7 @@ Diabetes clinic patient visit dashboard for analyzing DM remission study data. B
 ## Data Source
 - **Excel file**: `data/DM_remiss_analyz2.xlsx` (current, correct source)
 - **Main sheet**: `CollectVer`
-- **Embedded dataset**: 223 visits / 54 patients (after excluding rows with blank VISIT)
+- **Embedded dataset**: 223 visits / 54 patients (after excluding rows with blank VISIT). **HN (hospital number) is stripped** before embedding for PDPA/privacy reasons — patient lookup uses `NO` only.
 - **Date range**: Feb 2568 - Mar 2569 (Thai Buddhist; Feb 2025 - Mar 2026 Gregorian)
 - The legacy file `DM_remiss_analyz(1).xlsx` is **wrong** — do not use.
 
@@ -95,5 +95,6 @@ If the Excel changes, re-extract via Python (openpyxl):
 3. **Skip rows where `VISIT` is blank** (data-entry inconsistency)
 4. **Recompute BMI** as `BW * 10000 / HT^2` (the Excel column is wrong)
 5. Convert SEX from string ('1'/'0') to int; format VISIT_DATE as `YYYY-MM-DD`
-6. Serialize to JSON and replace the single-line `const RAW_DATA = [...];` near the top of the `<script>` block in `index.html`
-7. After changes: `git add index.html && git commit && git push` to update the live site
+6. **Do NOT include the `HN` column** in the JSON (PDPA — patient identifier)
+7. Serialize to JSON and replace the single-line `const RAW_DATA = [...];` near the top of the `<script>` block in `index.html`
+8. After changes: `git add index.html && git commit && git push` to update the live site
