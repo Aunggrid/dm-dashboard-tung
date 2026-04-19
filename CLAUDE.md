@@ -40,7 +40,7 @@ D:\AI_tung2\
 5. **เภสัชกรรม (Pharmacy)** — Polypharmacy, DM Remission, med counts + **DRPs charts merged in** (DRP type, Other DRP, DRP count distribution). Standalone DRPs tab no longer exists.
 6. **ข้อมูลประชากร (Demographics)** — Sex (doughnut), **Age (pie, filter buckets)**, Scheme (pie), BMI, eGFR, visits-per-patient
 7. **visit ที่ถึงเป้าหมาย (Visits to Goal)** — How many visits before achieving each clinical goal; stacked bar, achievement rate, avg visits, trend lines, per-patient detail table
-8. **ค้นหาผู้ป่วย (Patient Lookup)** — Search by NO (1-108) / HN, visit history & trends
+8. **ค้นหาผู้ป่วย (Patient Lookup)** — Search by NO (1-108) only (HN removed for PDPA), visit history & trends
 
 ## Global Filters
 Sex, Age range (`<40, 40-49, 50-59, 60-69, 70+`), Scheme, Visit number, Pharmacy (Polypharmacy ≥5 / ปกติ <5), DM Remission, **Post Counseling** (yes/no).
@@ -81,6 +81,8 @@ Sex, Age range (`<40, 40-49, 50-59, 60-69, 70+`), Scheme, Visit number, Pharmacy
 - **GitHub repo**: https://github.com/Aunggrid/dm-dashboard-tung (public)
 - **Live site**: https://aunggrid.github.io/dm-dashboard-tung/
 - Deployed via GitHub Pages (legacy mode, serves from `master` branch root)
+- **Privacy:** repo is public on the free tier (GitHub Pages requires it). Embedded data must therefore stay PDPA-safe — no HN, no names, no addresses. Patient identifiers in the embedded JSON are limited to the `NO` column (1-108, opaque sequence number).
+- Git history was rewritten with `git filter-repo` on 2026-04-19 to scrub HN values from earlier commits (force-pushed). GitHub may still serve unreachable old commits by direct SHA for ~90 days before garbage collection.
 
 ## Tech Stack
 - Pure HTML/CSS/JS (no build tools)
@@ -95,6 +97,15 @@ If the Excel changes, re-extract via Python (openpyxl):
 3. **Skip rows where `VISIT` is blank** (data-entry inconsistency)
 4. **Recompute BMI** as `BW * 10000 / HT^2` (the Excel column is wrong)
 5. Convert SEX from string ('1'/'0') to int; format VISIT_DATE as `YYYY-MM-DD`
-6. **Do NOT include the `HN` column** in the JSON (PDPA — patient identifier)
+6. **Do NOT include the `HN` column** in the JSON (PDPA — patient identifier). Also skip `NAME`. Only `NO` is allowed as a patient identifier.
 7. Serialize to JSON and replace the single-line `const RAW_DATA = [...];` near the top of the `<script>` block in `index.html`
 8. After changes: `git add index.html && git commit && git push` to update the live site
+
+### If HN/PII leaks into a commit by mistake
+The repo is public, so even one commit containing HN must be scrubbed from history, not just reverted.
+1. `pip install git-filter-repo`
+2. Create a replace-text spec: `echo 'regex:"HN": \d+==>"HN": null' > _hn_replace.txt`
+3. `git filter-repo --replace-text _hn_replace.txt --force`
+4. Re-add origin (filter-repo strips it as a safety): `git remote add origin https://github.com/Aunggrid/dm-dashboard-tung.git`
+5. Force-push: `git push --force origin master`
+6. Anyone with another clone must `git fetch && git reset --hard origin/master` — normal pull will fail.
