@@ -393,6 +393,14 @@ tbody tr:hover { background: var(--gray-50); }
         <option value="normal">ปกติ (ยา DM&gt;0)</option>
       </select>
     </div>
+    <div class="filter-group">
+      <label>Post Counseling</label>
+      <select id="filterPostCouns">
+        <option value="">ทั้งหมด</option>
+        <option value="yes">มี Post Counseling</option>
+        <option value="no">ไม่มี Post Counseling</option>
+      </select>
+    </div>
     <button class="btn-reset" id="btnReset">ล้างตัวกรอง</button>
   </div>
 
@@ -597,11 +605,11 @@ function initFilters() {
   const vsel = document.getElementById('filterVisit');
   visits.forEach(v => { const o = document.createElement('option'); o.value=v; o.textContent='visit '+v; vsel.appendChild(o); });
 
-  ['filterSex','filterAge','filterScheme','filterVisit','filterPharmacy','filterRemission'].forEach(id => {
+  ['filterSex','filterAge','filterScheme','filterVisit','filterPharmacy','filterRemission','filterPostCouns'].forEach(id => {
     document.getElementById(id).addEventListener('change', applyFilters);
   });
   document.getElementById('btnReset').addEventListener('click', () => {
-    ['filterSex','filterAge','filterScheme','filterVisit','filterPharmacy','filterRemission'].forEach(id => {
+    ['filterSex','filterAge','filterScheme','filterVisit','filterPharmacy','filterRemission','filterPostCouns'].forEach(id => {
       document.getElementById(id).value = '';
     });
     applyFilters();
@@ -616,6 +624,7 @@ function applyFilters() {
   const visit = document.getElementById('filterVisit').value;
   const pharmacy = document.getElementById('filterPharmacy').value;
   const remission = document.getElementById('filterRemission').value;
+  const postCouns = document.getElementById('filterPostCouns').value;
 
   if (sex !== '') data = data.filter(d => d.SEX == sex);
   if (age) {
@@ -628,6 +637,8 @@ function applyFilters() {
   if (pharmacy === 'normal') data = data.filter(d => d.ALLMED_COUNT != null && d.ALLMED_COUNT < 5);
   if (remission === 'remission') data = data.filter(d => d.DMMED_COUNT === 0);
   if (remission === 'normal') data = data.filter(d => d.DMMED_COUNT != null && d.DMMED_COUNT > 0);
+  if (postCouns === 'yes') data = data.filter(d => d.POSTCOUNS === 1);
+  if (postCouns === 'no')  data = data.filter(d => d.POSTCOUNS === 0);
 
   filteredData = data;
   renderCurrentTab();

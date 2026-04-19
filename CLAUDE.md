@@ -1,47 +1,61 @@
-# DM Clinic Dashboard Project
+# DM Remission Dashboard Project
 
 ## Overview
-Diabetes clinic patient visit dashboard for analyzing DM remission study data. Built as an offline-capable, interactive HTML dashboard with Thai language UI.
+Diabetes clinic patient visit dashboard for analyzing DM remission study data. Built as an offline-capable, interactive HTML dashboard with Thai language UI. Title: **DM Remission Dashboard**.
 
 ## Data Source
-- **Excel file**: `DM_remiss_analyz(1).xlsx`
-- **Main sheet**: `CollectVer` (278 visits, 106 patients)
-- **Date range**: Feb 2025 - Mar 2026 (Thai Buddhist calendar in original)
+- **Excel file**: `data/DM_remiss_analyz2.xlsx` (current, correct source)
+- **Main sheet**: `CollectVer`
+- **Embedded dataset**: 223 visits / 54 patients (after excluding rows with blank VISIT)
+- **Date range**: Feb 2568 - Mar 2569 (Thai Buddhist; Feb 2025 - Mar 2026 Gregorian)
+- The legacy file `DM_remiss_analyz(1).xlsx` is **wrong** — do not use.
+
+### Source data notes / known data-quality issues
+- **Blank VISIT rows are excluded** during extraction. In the source, ~55 rows have the VISIT column blank (mostly first/only visits where the data-entry person forgot to write `1`); excluding them drops ~53 single-visit patients.
+- **NO=75** is missing from the sequence (NO jumps 74 → 76); max NO = 108, but unique NOs in source = 107, and after blank-VISIT exclusion only 54 remain.
+- A few stray rows have `NO=None` with isolated values (e.g. `VISIT=54`, `HN=' '`) — also skipped.
+- **BMI in Excel is computed wrong** (`=10000/HT` instead of `BW*10000/HT^2`). Re-compute BMI in the extractor.
 
 ## Project Structure
 ```
 D:\AI_tung2\
-  index.html              # Main dashboard (self-contained with embedded JSON data)
-  DM_remiss_analyz(1).xlsx # Source Excel data
-  request.txt             # Original requirements
-  CLAUDE.md               # Project documentation
+  index.html               # Main dashboard (self-contained with embedded JSON data)
+  CLAUDE.md                # Project documentation
+  request.txt              # Original requirements
+  data/
+    DM_remiss_analyz2.xlsx # Current source Excel
+  DM_remiss_analyz(1).xlsx # Legacy/incorrect source (kept untracked, do not use)
   libs/
-    chart.min.js          # Chart.js v4.4.7 (offline)
+    chart.min.js           # Chart.js v4.4.7 (offline)
     chartjs-datalabels.min.js  # Chart.js datalabels plugin v2.2.0
     fonts/
-      sarabun-*.ttf       # Sarabun Thai font (400/500/600/700 weights)
+      sarabun-*.ttf        # Sarabun Thai font (400/500/600/700 weights)
 ```
 
-## Dashboard Tabs
-1. **ภาพรวม (Overview)** - KPIs, goal achievement, A1C distribution, timeline
-2. **ควบคุม DM** - A1C/FBS goals, medication adjustments, summary table
-3. **ควบคุม DLP** - LDL/TG goals, medication adjustments
-4. **ควบคุม HT** - SBP/DBP goals, BP scatter plot
-5. **เภสัชกรรม (Pharmacy)** - Polypharmacy, DM remission, med counts
-6. **DRPs** - Drug-related problems, hypoglycemia/hyperglycemia
-7. **ข้อมูลประชากร (Demographics)** - Sex, age, scheme, BMI, eGFR
-8. **ครั้งที่เยี่ยมถึงเป้าหมาย (Visits to Goal)** - How many visits before achieving each clinical goal; stacked bar, achievement rate, avg visits, trend lines, per-patient detail table
-9. **ค้นหาผู้ป่วย (Patient Lookup)** - Search by NO/HN, visit history & trends
+## Dashboard Tabs (8)
+1. **ภาพรวม (Overview)** — KPIs (incl. avg visit/patient, % Post Counseling), goal achievement, med-adjustment distribution, A1C distribution, monthly visit timeline, Post Counseling doughnut, visits-per-patient bar, **8 lab-trend line charts** (A1C/FBS/LDL/TG/SBP/DBP with goal lines; BMI/eGFR no goal line) showing avg per visit number
+2. **ควบคุม DM** — A1C/FBS goals, DM med adjustments, A1C-vs-DMCONTROL chart, **Hypoglycemia/Hyperglycemia events** (moved here from old DRPs tab), summary table
+3. **ควบคุม DLP** — LDL/TG goals, DLP med adjustments
+4. **ควบคุม HT** — SBP/DBP goals, BP scatter plot
+5. **เภสัชกรรม (Pharmacy)** — Polypharmacy, DM Remission, med counts + **DRPs charts merged in** (DRP type, Other DRP, DRP count distribution). Standalone DRPs tab no longer exists.
+6. **ข้อมูลประชากร (Demographics)** — Sex (doughnut), **Age (pie, filter buckets)**, Scheme (pie), BMI, eGFR, visits-per-patient
+7. **visit ที่ถึงเป้าหมาย (Visits to Goal)** — How many visits before achieving each clinical goal; stacked bar, achievement rate, avg visits, trend lines, per-patient detail table
+8. **ค้นหาผู้ป่วย (Patient Lookup)** — Search by NO (1-108) / HN, visit history & trends
+
+## Global Filters
+Sex, Age range (`<40, 40-49, 50-59, 60-69, 70+`), Scheme, Visit number, Pharmacy (Polypharmacy ≥5 / ปกติ <5), DM Remission, **Post Counseling** (yes/no).
 
 ## Clinical Thresholds
 | Metric | Goal | Related Control Column |
 |--------|------|----------------------|
-| A1C | < 6.5 | DMCONTROL |
+| A1C | **≤ 6.5** (inclusive) | DMCONTROL |
 | FBS | < 120 | DMCONTROL |
 | LDL | < 90 | DLPCONTROL |
 | TG | < 150 | DLPCONTROL |
 | SBP | < 130 | HTCONTROL |
 | DBP | < 80 | HTCONTROL |
+
+`computeVisitsToGoal(data, col, threshold, inclusive=false)` takes an `inclusive` flag — only A1C uses `inclusive: true`.
 
 ## Control Values (DMCONTROL / DLPCONTROL / HTCONTROL)
 - 0 = ไม่ปรับ (No change)
@@ -50,14 +64,18 @@ D:\AI_tung2\
 - 3 = เปลี่ยนยา (Switch)
 
 ## Key Definitions
-- **Polypharmacy**: ALLMED_COUNT > 5
-- **DM Remission**: DMMED_COUNT = 0
-- **DRPS_TYPE**: DRP from diabetes medications
-- **OTHERDRPS**: DRP from non-diabetes medications
+- **Polypharmacy**: `ALLMED_COUNT >= 5` (was `> 5` before)
+- **DM Remission**: `DMMED_COUNT = 0`
+- **POSTCOUNS**: 1 = had post-counseling at that visit, 0 = none
+- **HYPOGLYCEMIA / HYPERGLYCEMIA**: 1 = event happened at that visit
+- **DRPS_TYPE**: DRP(s) from diabetes medications (comma-separated)
+- **OTHERDRPS**: DRP(s) from non-diabetes medications
 
 ## Language
 - UI is in **Thai** (font: Sarabun)
 - Medical/professional terms kept in **English** (A1C, FBS, DRP, Polypharmacy, etc.)
+- The word "การเยี่ยม"/"ครั้งที่" was replaced with English **"visit"** throughout (e.g., `visit 1`, `5 visit`, `visit เฉลี่ย/ผู้ป่วย`) — preserve this convention in any new UI.
+- Header subtitle: `วิเคราะห์ข้อมูลการ visit ของผู้ป่วย — Feb 2568 - Mar 2569`
 
 ## Hosting
 - **GitHub repo**: https://github.com/Aunggrid/dm-dashboard-tung (public)
@@ -67,12 +85,15 @@ D:\AI_tung2\
 ## Tech Stack
 - Pure HTML/CSS/JS (no build tools)
 - Chart.js + datalabels plugin
-- Data embedded as JSON in HTML
+- Data embedded as JSON in HTML (single `RAW_DATA` constant near top of `<script>`)
 - Fully offline-capable (also hosted on GitHub Pages)
 
 ## How to Rebuild Data
-If the Excel changes, re-extract data using Python (openpyxl):
-1. Read `CollectVer` sheet with `data_only=True`
-2. Parse Thai Buddhist dates from PREDATE column (year - 543)
-3. Compute: VISIT (count per patient), SEX (from column H), BMI (BW*10000/HT^2)
-4. Export to JSON and embed in `index.html` replacing `RAW_DATA`
+If the Excel changes, re-extract via Python (openpyxl):
+1. Read `CollectVer` sheet of `data/DM_remiss_analyz2.xlsx` with `data_only=True`
+2. **Skip rows where `NO` is blank** (stray cells)
+3. **Skip rows where `VISIT` is blank** (data-entry inconsistency)
+4. **Recompute BMI** as `BW * 10000 / HT^2` (the Excel column is wrong)
+5. Convert SEX from string ('1'/'0') to int; format VISIT_DATE as `YYYY-MM-DD`
+6. Serialize to JSON and replace the single-line `const RAW_DATA = [...];` near the top of the `<script>` block in `index.html`
+7. After changes: `git add index.html && git commit && git push` to update the live site
